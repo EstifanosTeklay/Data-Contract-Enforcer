@@ -1,0 +1,89 @@
+kind: DataContract
+apiVersion: v3.0.0
+id: week4-lineage-snapshots
+info:
+  title: Week 4 Brownfield Cartographer — Lineage Snapshots
+  version: 1.0.0
+  owner: week4-team
+  description: Auto-generated contract for week4 outputs. Generated at 2026-04-01T18:50:47.507880Z
+    from 1 records.
+servers:
+  local:
+    type: local
+    path: outputs/week4/lineage_snapshots.jsonl
+    format: jsonl
+terms:
+  usage: Internal inter-system data contract. Do not publish.
+  limitations: confidence fields must remain float 0.0-1.0. Breaking changes require
+    blast radius report.
+schema:
+  snapshot_id:
+    type: string
+    required: &id001 !!python/object/apply:numpy._core.multiarray.scalar
+    - !!python/object/apply:numpy.dtype
+      args:
+      - b1
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - '|'
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 0
+    - !!binary |
+      AQ==
+    description: 'Column snapshot_id — null fraction: 0.0%'
+    format: uuid
+    unique: true
+  codebase_root:
+    type: string
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  git_commit:
+    type: string
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+    pattern: ^[a-f0-9]{40}$
+  nodes:
+    type: string
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  edges:
+    type: string
+    required: *id001
+    description: 'Column edges — null fraction: 0.0%'
+  captured_at:
+    type: string
+    required: *id001
+    description: 'Column captured_at — null fraction: 0.0%'
+    format: date-time
+quality:
+  type: SodaChecks
+  specification:
+    checks for week_4:
+    - missing_count(snapshot_id) = 0
+    - duplicate_count(snapshot_id) = 0
+    - row_count >= 1
+lineage:
+  upstream: []
+  downstream:
+  - id: week7-violation-attributor
+    description: ViolationAttributor traverses lineage graph for blame chain
+    fields_consumed:
+    - nodes
+    - edges
+    - git_commit
+    breaking_if_changed:
+    - edges.source
+    - edges.target
+    - nodes.node_id

@@ -1,0 +1,81 @@
+kind: DataContract
+apiVersion: v3.0.0
+id: week1-intent-records
+info:
+  title: Week 1 Intent-Code Correlator — Intent Records
+  version: 1.0.0
+  owner: week1-team
+  description: Auto-generated contract for week1 outputs. Generated at 2026-04-01T18:50:41.436152Z
+    from 10 records.
+servers:
+  local:
+    type: local
+    path: outputs/week1/intent_records.jsonl
+    format: jsonl
+terms:
+  usage: Internal inter-system data contract. Do not publish.
+  limitations: confidence fields must remain float 0.0-1.0. Breaking changes require
+    blast radius report.
+schema:
+  intent_id:
+    type: string
+    required: &id001 !!python/object/apply:numpy._core.multiarray.scalar
+    - !!python/object/apply:numpy.dtype
+      args:
+      - b1
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - '|'
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 0
+    - !!binary |
+      AQ==
+    description: 'Column intent_id — null fraction: 0.0%'
+    format: uuid
+  description:
+    type: string
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+    enum:
+    - 'Intent INT-001: write_to_file operation via AST_REFACTOR mutation'
+    - 'Synthetic padding: configuration update for module init'
+  code_refs:
+    type: string
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+    enum:
+    - '[{"confidence": 0.87, "file": "src/config.py", "line_end": 50, "line_start":
+      1, "symbol": "write_to_file"}]'
+    - '[{"confidence": 0.75, "file": "src/config.py", "line_end": 20, "line_start":
+      1, "symbol": "load_config"}]'
+  governance_tags:
+    type: string
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  created_at:
+    type: string
+    required: *id001
+    description: 'Column created_at — null fraction: 0.0%'
+    format: date-time
+quality:
+  type: SodaChecks
+  specification:
+    checks for week_1:
+    - missing_count(intent_id) = 0
+    - duplicate_count(intent_id) = 0
+    - row_count >= 5
+lineage:
+  upstream: []
+  downstream: []

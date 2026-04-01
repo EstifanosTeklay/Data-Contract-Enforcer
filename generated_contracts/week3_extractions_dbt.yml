@@ -1,0 +1,60 @@
+version: 2
+models:
+- name: week3_extractions
+  description: Week 3 Document Refinery — Extraction Records
+  columns:
+  - name: doc_id
+    description: 'Primary key. UUIDv4. Stable across re-extractions of the same source.
+      [format: uuid]'
+    tests:
+    - not_null
+    - unique
+  - name: source_path
+    description: 'Column source_path — null fraction: 0.0%'
+    tests:
+    - not_null
+  - name: source_hash
+    description: SHA-256 of the source file. Changes iff source content changes.
+    tests:
+    - not_null
+  - name: extracted_facts
+    description: List of facts extracted from the document. Must be non-empty.
+    tests:
+    - not_null
+  - name: entities
+    description: List of entities referenced by extracted facts.
+    tests:
+    - not_null
+  - name: extraction_model
+    description: Model identifier. Must match claude-* or gpt-*.
+    tests:
+    - not_null
+  - name: processing_time_ms
+    description: Processing duration in milliseconds. Must be > 0.
+    tests:
+    - not_null
+  - name: extracted_at
+    description: 'ISO 8601 timestamp of extraction completion. [format: date-time]'
+    tests:
+    - not_null
+  - name: token_count.input
+    description: 'Column token_count.input — null fraction: 0.0%'
+    tests:
+    - not_null
+  - name: token_count.output
+    description: 'Column token_count.output — null fraction: 0.0%'
+    tests:
+    - not_null
+  tests:
+  - dbt_utils.expression_is_true:
+      expression: processing_time_ms >= 1 and processing_time_ms <= 39630.0
+      name: processing_time_ms_range_1_to_39630.0
+  - dbt_utils.expression_is_true:
+      expression: token_count.input >= 2022.0 and token_count.input <= 5976.0
+      name: token_count.input_range_2022.0_to_5976.0
+  - dbt_utils.expression_is_true:
+      expression: token_count.output >= 400.0 and token_count.output <= 1196.0
+      name: token_count.output_range_400.0_to_1196.0
+  - dbt_utils.expression_is_true:
+      expression: processing_time_ms > 0
+      name: processing_time_positive

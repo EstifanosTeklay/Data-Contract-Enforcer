@@ -1,0 +1,92 @@
+version: 2
+models:
+- name: week5_events
+  description: "Week 5 Event Sourcing Platform \u2014 Event Records"
+  columns:
+  - name: event_id
+    description: 'Primary key. UUIDv4. Unique per event. [format: uuid]'
+    tests:
+    - not_null
+    - unique
+  - name: event_type
+    description: PascalCase event type name. Registered in schema registry.
+    tests:
+    - not_null
+    - accepted_values:
+        values:
+        - ApplicationSubmitted
+        - CreditAnalysisRequested
+        - CreditAnalysisCompleted
+        - FraudScreeningCompleted
+        - ComplianceClearanceIssued
+  - name: aggregate_id
+    description: "ID of the aggregate root. Format: '{type}-{id}' e.g. loan-APEX-COMMERCIAL-001\
+      \ or agent-{id}. NOT a UUID \u2014 stream-scoped identifier. [format: uuid]"
+    tests:
+    - not_null
+  - name: aggregate_type
+    description: PascalCase aggregate type.
+    tests:
+    - not_null
+    - accepted_values:
+        values:
+        - LoanApplication
+        - AgentSession
+        - ComplianceCase
+        - AuditRecord
+        - Domain
+  - name: sequence_number
+    description: Monotonically increasing per aggregate_id. No gaps, no duplicates.
+    tests:
+    - not_null
+  - name: schema_version
+    description: Semantic version string e.g. '1.0' or '2.0'.
+    tests:
+    - not_null
+  - name: occurred_at
+    description: 'When the event occurred in the domain. [format: date-time]'
+    tests:
+    - not_null
+  - name: recorded_at
+    description: 'When the event was persisted. Must be >= occurred_at. [format: date-time]'
+    tests:
+    - not_null
+  - name: payload.application_id
+    description: "Column payload.application_id \u2014 null fraction: 0.0% [format:\
+      \ uuid]"
+    tests:
+    - not_null
+  - name: payload.confidence_score
+    description: Confidence score for the decision or analysis. MUST be float 0.0-1.0.
+      BREAKING CHANGE if changed to 0-100 scale.
+    tests:
+    - not_null
+  - name: metadata.causation_id
+    description: "Causation ID. Nullable \u2014 null for root events. [format: uuid]"
+  - name: metadata.correlation_id
+    description: 'Correlation ID for tracing related events. [format: uuid]'
+    tests:
+    - not_null
+  - name: metadata.user_id
+    description: 'User or service account that triggered the event. May be ''system''
+      for automated events. [format: uuid]'
+    tests:
+    - not_null
+  - name: metadata.source_service
+    description: Service that produced this event.
+    tests:
+    - not_null
+  tests:
+  - dbt_utils.expression_is_true:
+      expression: sequence_number >= 1 and sequence_number <= 9.0
+      name: sequence_number_range_1_to_9.0
+  - dbt_utils.expression_is_true:
+      expression: payload.confidence_score >= 0.0 and payload.confidence_score <=
+        1.0
+      name: payload.confidence_score_range_0.0_to_1.0
+  - dbt_utils.expression_is_true:
+      expression: recorded_at >= occurred_at
+      name: recorded_at_gte_occurred_at
+  - dbt_utils.expression_is_true:
+      expression: sequence_number >= 1
+      name: sequence_number_positive

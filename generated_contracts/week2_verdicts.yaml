@@ -1,0 +1,113 @@
+kind: DataContract
+apiVersion: v3.0.0
+id: week2-verdict-records
+info:
+  title: Week 2 Digital Courtroom — Verdict Records
+  version: 1.0.0
+  owner: week2-team
+  description: Auto-generated contract for week2 outputs. Generated at 2026-04-01T18:50:43.069380Z
+    from 1 records.
+servers:
+  local:
+    type: local
+    path: outputs/week2/verdicts.jsonl
+    format: jsonl
+terms:
+  usage: Internal inter-system data contract. Do not publish.
+  limitations: confidence fields must remain float 0.0-1.0. Breaking changes require
+    blast radius report.
+schema:
+  verdict_id:
+    type: string
+    required: &id001 !!python/object/apply:numpy._core.multiarray.scalar
+    - !!python/object/apply:numpy.dtype
+      args:
+      - b1
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - '|'
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 0
+    - !!binary |
+      AQ==
+    description: 'Column verdict_id — null fraction: 0.0%'
+    format: uuid
+    unique: true
+  target_ref:
+    type: string
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  rubric_id:
+    type: string
+    required: *id001
+    description: 'Column rubric_id — null fraction: 0.0%'
+    format: uuid
+  rubric_version:
+    type: string
+    required: *id001
+    description: 'Column rubric_version — null fraction: 0.0%'
+  overall_verdict:
+    type: string
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+    enum:
+    - PASS
+    - FAIL
+    - WARN
+  overall_score:
+    type: number
+    required: *id001
+    description: 'Column overall_score — null fraction: 0.0%'
+    minimum: 1.0
+    maximum: 5.0
+  confidence:
+    type: number
+    required: *id001
+    description: Confidence in verdict. Float 0.0-1.0.
+    minimum: 0.0
+    maximum: 1.0
+  evaluated_at:
+    type: string
+    required: *id001
+    description: 'Column evaluated_at — null fraction: 0.0%'
+    format: date-time
+  scores.code_quality:
+    type: string
+    required: *id001
+    description: 'Column scores.code_quality — null fraction: 0.0%'
+  scores.test_coverage:
+    type: string
+    required: *id001
+    description: 'Column scores.test_coverage — null fraction: 0.0%'
+  scores.documentation:
+    type: string
+    required: *id001
+    description: 'Column scores.documentation — null fraction: 0.0%'
+  scores.security:
+    type: string
+    required: *id001
+    description: 'Column scores.security — null fraction: 0.0%'
+quality:
+  type: SodaChecks
+  specification:
+    checks for week_2:
+    - missing_count(verdict_id) = 0
+    - duplicate_count(verdict_id) = 0
+    - row_count >= 1
+    - min(confidence) >= 0.0
+    - max(confidence) <= 1.0
+    - avg(confidence) between 0.01 and 0.99
+    - invalid_values(overall_verdict, ['PASS','FAIL','WARN']) = 0
+lineage:
+  upstream: []
+  downstream: []

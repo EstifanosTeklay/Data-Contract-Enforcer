@@ -1,0 +1,189 @@
+kind: DataContract
+apiVersion: v3.0.0
+id: langsmith-trace-records
+info:
+  title: LangSmith Trace Records — AI Pipeline Observability
+  version: 1.0.0
+  owner: traces-team
+  description: Auto-generated contract for traces outputs. Generated at 2026-04-01T18:50:50.557158Z
+    from 25 records.
+servers:
+  local:
+    type: local
+    path: outputs/traces/runs.jsonl
+    format: jsonl
+terms:
+  usage: Internal inter-system data contract. Do not publish.
+  limitations: confidence fields must remain float 0.0-1.0. Breaking changes require
+    blast radius report.
+schema:
+  id:
+    type: string
+    required: &id001 !!python/object/apply:numpy._core.multiarray.scalar
+    - &id002 !!python/object/apply:numpy.dtype
+      args:
+      - b1
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - '|'
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 0
+    - !!binary |
+      AQ==
+    description: 'Column id — null fraction: 0.0%'
+    format: uuid
+    unique: true
+  name:
+    type: string
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+    enum:
+    - document-extraction-chain
+    - judicial-verdict-chain
+  run_type:
+    type: string
+    required: *id001
+    description: 'Column run_type — null fraction: 0.0%'
+    enum:
+    - chain
+    - llm
+  error:
+    type: string
+    required: &id003 !!python/object/apply:numpy._core.multiarray.scalar
+    - *id002
+    - !!binary |
+      AA==
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  start_time:
+    type: string
+    required: *id001
+    description: 'Column start_time — null fraction: 0.0%'
+    format: date-time
+  end_time:
+    type: string
+    required: *id001
+    description: Must be > start_time.
+    format: date-time
+  total_tokens:
+    type: integer
+    required: *id001
+    description: 'Column total_tokens — null fraction: 0.0%'
+    minimum: 0
+    maximum: 11616.0
+  prompt_tokens:
+    type: integer
+    required: *id001
+    description: 'Column prompt_tokens — null fraction: 0.0%'
+    minimum: 0
+    maximum: 11094.0
+  completion_tokens:
+    type: integer
+    required: *id001
+    description: total_tokens = prompt_tokens + completion_tokens
+    minimum: 0
+    maximum: 1970.0
+  total_cost:
+    type: number
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+    minimum: 0.0
+    maximum: 0.052833
+  tags:
+    type: string
+    required: *id001
+    description: 'Column tags — null fraction: 0.0%'
+    enum:
+    - '["week3", "extraction"]'
+    - '["week2", "verdict", "judicial"]'
+  parent_run_id:
+    type: string
+    required: *id003
+    description: 'Column parent_run_id — null fraction: 44.0%'
+    format: uuid
+  session_id:
+    type: string
+    required: *id001
+    description: 'Column session_id — null fraction: 0.0%'
+    enum:
+    - a20a456e-8707-4936-8af6-4248eb0aa803
+    - 3781bdef-adb2-40ba-ac72-3d1cbd9289ff
+    format: uuid
+  inputs.doc_id:
+    type: string
+    required: *id003
+    description: 'Column inputs.doc_id — null fraction: 40.0%'
+    format: uuid
+  inputs.content_preview:
+    type: string
+    required: *id003
+    description: 'Column inputs.content_preview — null fraction: 40.0%'
+  inputs.source_path:
+    type: string
+    required: *id003
+    description: 'Column inputs.source_path — null fraction: 40.0%'
+  outputs.extracted_facts:
+    type: string
+    required: *id003
+    description: 'Column outputs.extracted_facts — null fraction: 40.0%'
+  inputs.target_ref:
+    type: string
+    required: *id003
+    description: 'Column inputs.target_ref — null fraction: 60.0%'
+  inputs.rubric_version:
+    type: string
+    required: *id003
+    description: 'Column inputs.rubric_version — null fraction: 60.0%'
+  outputs.overall_verdict:
+    type: string
+    required: *id003
+    description: 'Column outputs.overall_verdict — null fraction: 60.0%'
+  outputs.overall_score:
+    type: number
+    required: *id003
+    description: 'Column outputs.overall_score — null fraction: 60.0%'
+    minimum: 3.07
+    maximum: 4.71
+  outputs.confidence:
+    type: number
+    required: *id003
+    description: 'Column outputs.confidence — null fraction: 60.0%'
+    minimum: 0.66
+    maximum: 0.91
+quality:
+  type: SodaChecks
+  specification:
+    checks for traces:
+    - missing_count(id) = 0
+    - duplicate_count(id) = 0
+    - row_count >= 12
+    - min(outputs.confidence) >= 0.0
+    - max(outputs.confidence) <= 1.0
+    - avg(outputs.confidence) between 0.01 and 0.99
+    - min(total_cost) >= 0.0
+    - missing_count(run_type) = 0
+lineage:
+  upstream: []
+  downstream:
+  - id: week7-ai-contract-extensions
+    description: AI Extensions use traces for drift and violation rate metrics
+    fields_consumed:
+    - inputs
+    - outputs
+    - total_tokens
+    - total_cost
+    breaking_if_changed:
+    - total_tokens
+    - prompt_tokens
+    - completion_tokens

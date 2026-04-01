@@ -1,0 +1,143 @@
+kind: DataContract
+apiVersion: v3.0.0
+id: week5-event-records
+info:
+  title: Week 5 Event Sourcing Platform — Event Records
+  version: 1.0.0
+  owner: week5-team
+  description: Auto-generated contract for week5 outputs. Generated at 2026-04-01T19:54:04.695958Z
+    from 50 records.
+servers:
+  local:
+    type: local
+    path: outputs/week5/events.jsonl
+    format: jsonl
+terms:
+  usage: Internal inter-system data contract. Do not publish.
+  limitations: confidence fields must remain float 0.0-1.0. Breaking changes require
+    blast radius report.
+schema:
+  event_id:
+    type: string
+    required: &id001 !!python/object/apply:numpy._core.multiarray.scalar
+    - !!python/object/apply:numpy.dtype
+      args:
+      - b1
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - '|'
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 0
+    - !!binary |
+      AQ==
+    description: Primary key. UUIDv4. Unique per event.
+    format: uuid
+    unique: true
+  event_type:
+    type: string
+    required: true
+    description: PascalCase event type name. Registered in schema registry.
+    enum:
+    - ApplicationSubmitted
+    - CreditAnalysisRequested
+    - CreditAnalysisCompleted
+    - FraudScreeningCompleted
+    - ComplianceClearanceIssued
+  aggregate_id:
+    type: string
+    required: true
+    description: 'ID of the aggregate root. Format: ''{type}-{id}'' e.g. loan-APEX-COMMERCIAL-001
+      or agent-{id}. NOT a UUID — stream-scoped identifier.'
+    format: uuid
+  aggregate_type:
+    type: string
+    required: true
+    description: PascalCase aggregate type.
+    enum:
+    - LoanApplication
+    - AgentSession
+    - ComplianceCase
+    - AuditRecord
+    - Domain
+  sequence_number:
+    type: integer
+    required: *id001
+    description: Monotonically increasing per aggregate_id. No gaps, no duplicates.
+    minimum: 1
+    maximum: 9.0
+  schema_version:
+    type: string
+    required: true
+    description: Semantic version string e.g. '1.0' or '2.0'.
+  occurred_at:
+    type: string
+    required: true
+    description: When the event occurred in the domain.
+    format: date-time
+  recorded_at:
+    type: string
+    required: true
+    description: When the event was persisted. Must be >= occurred_at.
+    format: date-time
+  payload.application_id:
+    type: string
+    required: *id001
+    description: 'Column payload.application_id — null fraction: 0.0%'
+    format: uuid
+  payload.confidence_score:
+    type: number
+    required: *id001
+    description: Confidence score for the decision or analysis. MUST be float 0.0-1.0.
+      BREAKING CHANGE if changed to 0-100 scale.
+    minimum: 0.0
+    maximum: 1.0
+  metadata.causation_id:
+    type: string
+    required: false
+    description: Causation ID. Nullable — null for root events.
+    format: uuid
+  metadata.correlation_id:
+    type: string
+    required: true
+    description: Correlation ID for tracing related events.
+    format: uuid
+  metadata.user_id:
+    type: string
+    required: true
+    description: User or service account that triggered the event. May be 'system'
+      for automated events.
+    format: uuid
+  metadata.source_service:
+    type: string
+    required: true
+    description: Service that produced this event.
+quality:
+  type: SodaChecks
+  specification:
+    checks for week_5:
+    - missing_count(event_id) = 0
+    - duplicate_count(event_id) = 0
+    - row_count >= 25
+    - min(payload.confidence_score) >= 0.0
+    - max(payload.confidence_score) <= 1.0
+    - avg(payload.confidence_score) between 0.01 and 0.99
+    - missing_count(event_type) = 0
+lineage:
+  upstream: []
+  downstream:
+  - id: week7-contract-enforcer
+    description: ValidationRunner validates event payload schema
+    fields_consumed:
+    - event_type
+    - payload
+    - schema_version
+    breaking_if_changed:
+    - event_type
+    - payload
+    - sequence_number

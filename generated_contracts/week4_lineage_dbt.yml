@@ -1,0 +1,36 @@
+version: 2
+models:
+- name: week4
+  description: "Week 4 Brownfield Cartographer \u2014 Lineage Snapshots"
+  columns:
+  - name: snapshot_id
+    tests:
+    - not_null
+    - unique
+    description: "Column snapshot_id \u2014 null fraction: 0.0%"
+  - name: codebase_root
+    tests:
+    - not_null
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  - name: git_commit
+    tests:
+    - not_null
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  - name: nodes
+    tests:
+    - not_null
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  - name: edges
+    tests:
+    - not_null
+    description: "Column edges \u2014 null fraction: 0.0%"
+  - name: captured_at
+    tests:
+    - not_null
+    description: "Column captured_at \u2014 null fraction: 0.0%"

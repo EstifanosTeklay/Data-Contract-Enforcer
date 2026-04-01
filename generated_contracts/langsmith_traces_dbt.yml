@@ -1,0 +1,94 @@
+version: 2
+models:
+- name: langsmith_traces
+  description: "LangSmith Trace Records \u2014 AI Pipeline Observability"
+  columns:
+  - name: id
+    tests:
+    - not_null
+    - unique
+    description: "Column id \u2014 null fraction: 0.0%"
+  - name: name
+    tests:
+    - not_null
+    - accepted_values:
+        values:
+        - document-extraction-chain
+        - judicial-verdict-chain
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  - name: run_type
+    tests:
+    - not_null
+    - accepted_values:
+        values:
+        - chain
+        - llm
+    description: "Column run_type \u2014 null fraction: 0.0%"
+  - name: error
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  - name: start_time
+    tests:
+    - not_null
+    description: "Column start_time \u2014 null fraction: 0.0%"
+  - name: end_time
+    tests:
+    - not_null
+    description: Must be > start_time.
+  - name: total_tokens
+    tests:
+    - not_null
+    description: "Column total_tokens \u2014 null fraction: 0.0%"
+  - name: prompt_tokens
+    tests:
+    - not_null
+    description: "Column prompt_tokens \u2014 null fraction: 0.0%"
+  - name: completion_tokens
+    tests:
+    - not_null
+    description: total_tokens = prompt_tokens + completion_tokens
+  - name: total_cost
+    tests:
+    - not_null
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  - name: tags
+    tests:
+    - not_null
+    - accepted_values:
+        values:
+        - '["week3", "extraction"]'
+        - '["week2", "verdict", "judicial"]'
+    description: "Column tags \u2014 null fraction: 0.0%"
+  - name: parent_run_id
+    description: "Column parent_run_id \u2014 null fraction: 44.0%"
+  - name: session_id
+    tests:
+    - not_null
+    - accepted_values:
+        values:
+        - a20a456e-8707-4936-8af6-4248eb0aa803
+        - 3781bdef-adb2-40ba-ac72-3d1cbd9289ff
+    description: "Column session_id \u2014 null fraction: 0.0%"
+  - name: inputs.doc_id
+    description: "Column inputs.doc_id \u2014 null fraction: 40.0%"
+  - name: inputs.content_preview
+    description: "Column inputs.content_preview \u2014 null fraction: 40.0%"
+  - name: inputs.source_path
+    description: "Column inputs.source_path \u2014 null fraction: 40.0%"
+  - name: outputs.extracted_facts
+    description: "Column outputs.extracted_facts \u2014 null fraction: 40.0%"
+  - name: inputs.target_ref
+    description: "Column inputs.target_ref \u2014 null fraction: 60.0%"
+  - name: inputs.rubric_version
+    description: "Column inputs.rubric_version \u2014 null fraction: 60.0%"
+  - name: outputs.overall_verdict
+    description: "Column outputs.overall_verdict \u2014 null fraction: 60.0%"
+  - name: outputs.overall_score
+    description: "Column outputs.overall_score \u2014 null fraction: 60.0%"
+  - name: outputs.confidence
+    description: "Column outputs.confidence \u2014 null fraction: 60.0%"

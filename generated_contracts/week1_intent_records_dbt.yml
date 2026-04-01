@@ -1,0 +1,41 @@
+version: 2
+models:
+- name: week1
+  description: "Week 1 Intent-Code Correlator \u2014 Intent Records"
+  columns:
+  - name: intent_id
+    tests:
+    - not_null
+    description: "Column intent_id \u2014 null fraction: 0.0%"
+  - name: description
+    tests:
+    - not_null
+    - accepted_values:
+        values:
+        - 'Intent INT-001: write_to_file operation via AST_REFACTOR mutation'
+        - 'Synthetic padding: configuration update for module init'
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  - name: code_refs
+    tests:
+    - not_null
+    - accepted_values:
+        values:
+        - '[{"confidence": 0.87, "file": "src/config.py", "line_end": 50, "line_start":
+          1, "symbol": "write_to_file"}]'
+        - '[{"confidence": 0.75, "file": "src/config.py", "line_end": 20, "line_start":
+          1, "symbol": "load_config"}]'
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  - name: governance_tags
+    tests:
+    - not_null
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  - name: created_at
+    tests:
+    - not_null
+    description: "Column created_at \u2014 null fraction: 0.0%"
