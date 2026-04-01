@@ -1,0 +1,26 @@
+{
+  "week5-event-records": {
+    "sequence_number": {
+      "mean": 4.8,
+      "std": 2.5872528966106905
+    },
+    "payload.confidence_score": {
+      "mean": 0.8195999999999999,
+      "std": 0.08144009943460512
+    }
+  },
+  "week3-document-refinery-extractions": {
+    "processing_time_ms": {
+      "mean": 8932.68,
+      "std": 6659.829109899233
+    },
+    "token_count.input": {
+      "mean": 3959.58,
+      "std": 1156.2449618643684
+    },
+    "token_count.output": {
+      "mean": 701.44,
+      "std": 228.45319799352643
+    }
+  }
+}

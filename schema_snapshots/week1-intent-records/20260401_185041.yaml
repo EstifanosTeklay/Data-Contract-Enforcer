@@ -1,0 +1,56 @@
+contract_id: week1-intent-records
+snapshot_timestamp: '2026-04-01T18:50:41.441761Z'
+source_path: outputs/week1/intent_records.jsonl
+schema:
+  intent_id:
+    type: string
+    required: &id001 !!python/object/apply:numpy._core.multiarray.scalar
+    - !!python/object/apply:numpy.dtype
+      args:
+      - b1
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - '|'
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 0
+    - !!binary |
+      AQ==
+    description: "Column intent_id \u2014 null fraction: 0.0%"
+    format: uuid
+  description:
+    type: string
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+    enum:
+    - 'Intent INT-001: write_to_file operation via AST_REFACTOR mutation'
+    - 'Synthetic padding: configuration update for module init'
+  code_refs:
+    type: string
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+    enum:
+    - '[{"confidence": 0.87, "file": "src/config.py", "line_end": 50, "line_start":
+      1, "symbol": "write_to_file"}]'
+    - '[{"confidence": 0.75, "file": "src/config.py", "line_end": 20, "line_start":
+      1, "symbol": "load_config"}]'
+  governance_tags:
+    type: string
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+  created_at:
+    type: string
+    required: *id001
+    description: "Column created_at \u2014 null fraction: 0.0%"
+    format: date-time

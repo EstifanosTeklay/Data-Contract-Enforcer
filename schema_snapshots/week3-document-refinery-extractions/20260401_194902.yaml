@@ -1,0 +1,55 @@
+contract_id: week3-document-refinery-extractions
+snapshot_timestamp: '2026-04-01T19:49:02.182584Z'
+source_path: outputs/week3/extractions.jsonl
+schema:
+  doc_id:
+    type: string
+    required: true
+    description: Primary key. UUIDv4. Stable across re-extractions.
+    format: uuid
+    unique: true
+  source_path:
+    type: string
+    required: true
+    description: 'Column source_path — null fraction: 0.0%'
+  source_hash:
+    type: string
+    required: true
+    description: SHA-256 of source file content.
+    pattern: ^[a-f0-9]{64}$
+  extracted_facts:
+    type: string
+    required: true
+    description: 'Column extracted_facts — null fraction: 0.0%'
+  entities:
+    type: string
+    required: true
+    description: 'Column entities — null fraction: 0.0%'
+  extraction_model:
+    type: string
+    required: true
+    description: Model identifier. Must match claude-* or gpt-*.
+    pattern: ^(claude|gpt)-
+  processing_time_ms:
+    type: integer
+    required: true
+    description: Processing duration in milliseconds. Must be > 0.
+    minimum: 1
+    maximum: 39630.0
+  extracted_at:
+    type: string
+    required: true
+    description: 'Column extracted_at — null fraction: 0.0%'
+    format: date-time
+  token_count.input:
+    type: integer
+    required: true
+    description: 'Column token_count.input — null fraction: 0.0%'
+    minimum: 2022.0
+    maximum: 5976.0
+  token_count.output:
+    type: integer
+    required: true
+    description: 'Column token_count.output — null fraction: 0.0%'
+    minimum: 400.0
+    maximum: 1196.0

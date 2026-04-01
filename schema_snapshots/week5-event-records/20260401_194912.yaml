@@ -1,0 +1,82 @@
+contract_id: week5-event-records
+snapshot_timestamp: '2026-04-01T19:49:12.844997Z'
+source_path: outputs/week5/events.jsonl
+schema:
+  event_id:
+    type: string
+    required: true
+    description: 'Column event_id — null fraction: 0.0%'
+    format: uuid
+    unique: true
+  event_type:
+    type: string
+    required: true
+    description: PascalCase event type name.
+    enum:
+    - ApplicationSubmitted
+    - CreditAnalysisRequested
+    - CreditAnalysisCompleted
+    - FraudScreeningCompleted
+    - ComplianceClearanceIssued
+    - DecisionGenerated
+    - HumanReviewCompleted
+    - ApplicationApproved
+  aggregate_id:
+    type: string
+    required: true
+    description: ID of the aggregate root.
+    format: uuid
+  aggregate_type:
+    type: string
+    required: true
+    description: 'Column aggregate_type — null fraction: 0.0%'
+  sequence_number:
+    type: integer
+    required: true
+    description: Monotonically increasing per aggregate_id.
+    minimum: 1
+    maximum: 9.0
+  schema_version:
+    type: string
+    required: true
+    description: Semantic version string e.g. 1.0
+  occurred_at:
+    type: string
+    required: true
+    description: 'Column occurred_at — null fraction: 0.0%'
+    format: date-time
+  recorded_at:
+    type: string
+    required: true
+    description: Must be >= occurred_at.
+    format: date-time
+  payload.application_id:
+    type: string
+    required: true
+    description: 'Column payload.application_id — null fraction: 0.0%'
+    format: uuid
+  payload.confidence_score:
+    type: number
+    required: true
+    description: 'Column payload.confidence_score — null fraction: 0.0%'
+    minimum: 0.66
+    maximum: 0.97
+  metadata.causation_id:
+    type: string
+    required: false
+    description: 'Column metadata.causation_id — null fraction: 100.0%'
+    format: uuid
+  metadata.correlation_id:
+    type: string
+    required: true
+    description: 'Column metadata.correlation_id — null fraction: 0.0%'
+    format: uuid
+  metadata.user_id:
+    type: string
+    required: true
+    description: 'Column metadata.user_id — null fraction: 0.0%'
+    format: uuid
+  metadata.source_service:
+    type: string
+    required: true
+    description: 'Column metadata.source_service — null fraction: 0.0%'

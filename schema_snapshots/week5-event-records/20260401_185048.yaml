@@ -1,0 +1,100 @@
+contract_id: week5-event-records
+snapshot_timestamp: '2026-04-01T18:50:48.325183Z'
+source_path: outputs/week5/events.jsonl
+schema:
+  event_id:
+    type: string
+    required: &id001 !!python/object/apply:numpy._core.multiarray.scalar
+    - &id002 !!python/object/apply:numpy.dtype
+      args:
+      - b1
+      - false
+      - true
+      state: !!python/tuple
+      - 3
+      - '|'
+      - null
+      - null
+      - null
+      - -1
+      - -1
+      - 0
+    - !!binary |
+      AQ==
+    description: "Column event_id \u2014 null fraction: 0.0%"
+    format: uuid
+    unique: true
+  event_type:
+    type: string
+    required: *id001
+    description: PascalCase event type name.
+    enum:
+    - ApplicationSubmitted
+    - CreditAnalysisRequested
+    - CreditAnalysisCompleted
+    - FraudScreeningCompleted
+    - ComplianceClearanceIssued
+  aggregate_id:
+    type: string
+    required: *id001
+    description: ID of the aggregate root.
+    format: uuid
+  aggregate_type:
+    type: string
+    required: *id001
+    description: "Column aggregate_type \u2014 null fraction: 0.0%"
+  sequence_number:
+    type: integer
+    required: *id001
+    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
+      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
+      or `Authorization` headers to be explicitly omitted"'
+    minimum: 1
+    maximum: 9.0
+  schema_version:
+    type: string
+    required: *id001
+    description: Semantic version string e.g. 1.0
+  occurred_at:
+    type: string
+    required: *id001
+    description: "Column occurred_at \u2014 null fraction: 0.0%"
+    format: date-time
+  recorded_at:
+    type: string
+    required: *id001
+    description: Must be >= occurred_at.
+    format: date-time
+  payload.application_id:
+    type: string
+    required: *id001
+    description: "Column payload.application_id \u2014 null fraction: 0.0%"
+    format: uuid
+  payload.confidence_score:
+    type: number
+    required: *id001
+    description: "Column payload.confidence_score \u2014 null fraction: 0.0%"
+    minimum: 0.66
+    maximum: 0.97
+  metadata.causation_id:
+    type: string
+    required: !!python/object/apply:numpy._core.multiarray.scalar
+    - *id002
+    - !!binary |
+      AA==
+    description: "Column metadata.causation_id \u2014 null fraction: 100.0%"
+    format: uuid
+  metadata.correlation_id:
+    type: string
+    required: *id001
+    description: "Column metadata.correlation_id \u2014 null fraction: 0.0%"
+    format: uuid
+  metadata.user_id:
+    type: string
+    required: *id001
+    description: "Column metadata.user_id \u2014 null fraction: 0.0%"
+    format: uuid
+  metadata.source_service:
+    type: string
+    required: *id001
+    description: "Column metadata.source_service \u2014 null fraction: 0.0%"

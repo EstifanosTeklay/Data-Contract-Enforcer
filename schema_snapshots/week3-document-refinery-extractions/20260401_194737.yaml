@@ -1,0 +1,4 @@
+contract_id: week3-document-refinery-extractions
+snapshot_timestamp: '2026-04-01T19:47:37.327701Z'
+source_path: outputs/week3/extractions.jsonl
+schema: {}
