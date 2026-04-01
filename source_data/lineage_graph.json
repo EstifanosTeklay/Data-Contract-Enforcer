@@ -1,0 +1,108 @@
+{
+  "directed": true,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "name": "<spark_dynamic:145>",
+      "storage_type": "file",
+      "schema_snapshot": null,
+      "freshness_sla": null,
+      "owner": null,
+      "is_source_of_truth": false,
+      "path_or_table": null,
+      "node_type": "dataset",
+      "id": "<spark_dynamic:145>"
+    },
+    {
+      "id": "src/agents/audit_mode.py::py_dataflow",
+      "source_datasets": [
+        "<spark_dynamic:145>"
+      ],
+      "target_datasets": [],
+      "transformation_type": "transform",
+      "source_file": "src/agents/audit_mode.py",
+      "line_range": [
+        145,
+        0
+      ],
+      "sql_query": null,
+      "node_type": "transformation"
+    },
+    {
+      "name": "<spark_dynamic:468>",
+      "storage_type": "file",
+      "schema_snapshot": null,
+      "freshness_sla": null,
+      "owner": null,
+      "is_source_of_truth": false,
+      "path_or_table": null,
+      "node_type": "dataset",
+      "id": "<spark_dynamic:468>"
+    },
+    {
+      "id": "src/agents/query_agent.py::py_dataflow",
+      "source_datasets": [
+        "<spark_dynamic:468>"
+      ],
+      "target_datasets": [],
+      "transformation_type": "transform",
+      "source_file": "src/agents/query_agent.py",
+      "line_range": [
+        468,
+        0
+      ],
+      "sql_query": null,
+      "node_type": "transformation"
+    },
+    {
+      "name": "png",
+      "storage_type": "file",
+      "schema_snapshot": null,
+      "freshness_sla": null,
+      "owner": null,
+      "is_source_of_truth": false,
+      "path_or_table": null,
+      "node_type": "dataset",
+      "id": "png"
+    },
+    {
+      "id": "src/strategies/strategy_c.py::py_dataflow",
+      "source_datasets": [],
+      "target_datasets": [
+        "PNG"
+      ],
+      "transformation_type": "transform",
+      "source_file": "src/strategies/strategy_c.py",
+      "line_range": [
+        0,
+        143
+      ],
+      "sql_query": null,
+      "node_type": "transformation"
+    },
+    {
+      "node_type": "dataset",
+      "name": "PNG",
+      "storage_type": "unknown",
+      "id": "PNG"
+    }
+  ],
+  "edges": [
+    {
+      "edge_type": "CONSUMES",
+      "source": "<spark_dynamic:145>",
+      "target": "src/agents/audit_mode.py::py_dataflow"
+    },
+    {
+      "edge_type": "CONSUMES",
+      "source": "<spark_dynamic:468>",
+      "target": "src/agents/query_agent.py::py_dataflow"
+    },
+    {
+      "edge_type": "PRODUCES",
+      "source": "src/strategies/strategy_c.py::py_dataflow",
+      "target": "PNG"
+    }
+  ]
+}
