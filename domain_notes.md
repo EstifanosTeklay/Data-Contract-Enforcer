@@ -1,4 +1,4 @@
-# DOMAIN_NOTES.md — Week 7: Data Contract Enforcer
+# DOMAIN_NOTES.md — Data Contract Enforcer
 
 ## Question 1: Backward-Compatible vs. Breaking Schema Changes
 
