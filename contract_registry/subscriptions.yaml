@@ -1,0 +1,197 @@
+# =====================================
+# Contract Registry — Tier 1 (same repo, single org)
+# =====================================
+# This file is the authoritative record of every inter-system data dependency
+# in the Week 7 Data Contract Enforcer platform.
+#
+# Every arrow in the data-flow diagram must have a subscription entry here.
+# The ViolationAttributor uses this file as the PRIMARY blast radius source.
+# The lineage graph is used for transitive enrichment only.
+#
+# Validation modes:
+#   ENFORCE — block pipeline on CRITICAL or HIGH violation
+#   WARN    — pass data through with violation annotations
+#   AUDIT   — log violations, never block (use during calibration)
+#
+# Maintained by: week7-team
+# Last updated: 2026-04-02
+
+subscriptions:
+
+  # ── Arrow 1: Week 1 → Week 2 ──────────────────────────────────────────────
+  - contract_id: week1-intent-records
+    subscriber_id: week2-digital-courtroom
+    subscriber_team: week2
+    fields_consumed:
+      - code_refs
+      - intent_id
+      - governance_tags
+    breaking_fields:
+      - field: code_refs
+        reason: >
+          target_ref in verdict_record is resolved from code_refs[].file.
+          Removing or renaming code_refs breaks the W1->W2 cross-reference check.
+      - field: intent_id
+        reason: >
+          Used as the primary correlation key between intent and verdict records.
+          Type or format change breaks verdict lookup.
+    validation_mode: AUDIT
+    registered_at: "2026-01-10T09:00:00Z"
+    contact: week2-team@org.com
+
+  # ── Arrow 2: Week 3 → Week 4 ──────────────────────────────────────────────
+  - contract_id: week3-document-refinery-extractions
+    subscriber_id: week4-cartographer
+    subscriber_team: week4
+    fields_consumed:
+      - doc_id
+      - extracted_facts
+      - extraction_model
+      - entities
+    breaking_fields:
+      - field: extracted_facts.confidence
+        reason: >
+          Used for lineage node ranking and edge confidence thresholding.
+          A scale change from 0.0-1.0 to 0-100 causes all edges to pass
+          the confidence filter unconditionally, corrupting the lineage graph.
+      - field: doc_id
+        reason: >
+          Primary key for node identity in the lineage graph.
+          Format change breaks node deduplication and cross-snapshot matching.
+      - field: entities
+        reason: >
+          Entity records become node metadata in the lineage graph.
+          Removing or renaming entity fields breaks node enrichment.
+    validation_mode: ENFORCE
+    registered_at: "2026-01-10T09:00:00Z"
+    contact: week4-team@org.com
+
+  # ── Arrow 3: Week 3 → Week 7 (AI Extensions) ─────────────────────────────
+  - contract_id: week3-document-refinery-extractions
+    subscriber_id: week7-ai-contract-extensions
+    subscriber_team: week7
+    fields_consumed:
+      - extracted_facts
+      - doc_id
+    breaking_fields:
+      - field: extracted_facts.confidence
+        reason: >
+          AI extension embedding drift baseline uses extracted_facts[*].text.
+          Confidence scale change invalidates drift threshold calibration.
+      - field: doc_id
+        reason: >
+          Used as record identifier in quarantine output. Format change
+          breaks quarantine record linkage.
+    validation_mode: AUDIT
+    registered_at: "2026-01-10T09:00:00Z"
+    contact: week7-team@org.com
+
+  # ── Arrow 4: Week 4 → Week 7 (ViolationAttributor) ───────────────────────
+  - contract_id: week4-lineage-snapshots
+    subscriber_id: week7-violation-attributor
+    subscriber_team: week7
+    fields_consumed:
+      - nodes
+      - edges
+      - git_commit
+      - snapshot_id
+    breaking_fields:
+      - field: edges.source
+        reason: >
+          BFS traversal in ViolationAttributor uses edge source/target node_ids.
+          Changing edge format breaks graph traversal and blame chain construction.
+      - field: edges.target
+        reason: >
+          Same as edges.source — both are required for directed graph traversal.
+      - field: nodes.node_id
+        reason: >
+          node_id is the stable identifier used to correlate lineage nodes
+          with git file paths. Format change breaks git blame integration.
+      - field: git_commit
+        reason: >
+          40-char SHA used to anchor blame chain to a specific repo state.
+          Format change or truncation breaks git log queries.
+    validation_mode: ENFORCE
+    registered_at: "2026-01-10T09:00:00Z"
+    contact: week7-team@org.com
+
+  # ── Arrow 5: Week 5 → Week 7 (ValidationRunner) ───────────────────────────
+  - contract_id: week5-event-records
+    subscriber_id: week7-contract-enforcer
+    subscriber_team: week7
+    fields_consumed:
+      - event_type
+      - payload
+      - schema_version
+      - sequence_number
+      - aggregate_id
+    breaking_fields:
+      - field: event_type
+        reason: >
+          Event type enum is used to route payload to the correct JSON Schema
+          validator. Adding unknown event types without registry notification
+          causes unvalidated events to pass through silently.
+      - field: payload
+        reason: >
+          Payload structure is validated against per-event-type JSON Schema.
+          Silent payload changes cause schema validation to fail or pass incorrectly.
+      - field: sequence_number
+        reason: >
+          Monotonic sequence check detects gaps and duplicates.
+          Type change (int -> string) or reset breaks sequence integrity check.
+    validation_mode: ENFORCE
+    registered_at: "2026-01-10T09:00:00Z"
+    contact: week7-team@org.com
+
+  # ── Arrow 6: LangSmith Traces → Week 7 (AI Extensions) ───────────────────
+  - contract_id: langsmith-trace-records
+    subscriber_id: week7-ai-contract-extensions
+    subscriber_team: week7
+    fields_consumed:
+      - inputs
+      - outputs
+      - total_tokens
+      - prompt_tokens
+      - completion_tokens
+      - total_cost
+      - run_type
+      - tags
+    breaking_fields:
+      - field: total_tokens
+        reason: >
+          Token arithmetic check (total = prompt + completion) uses all three
+          token fields. Removing or renaming any breaks the integrity check.
+      - field: total_cost
+        reason: >
+          Cost tracking metric baseline uses total_cost. Type change or
+          unit change (USD -> cents) silently corrupts cost aggregations.
+      - field: outputs
+        reason: >
+          LLM output schema violation rate is computed from outputs field.
+          Structural change to outputs breaks violation rate tracking.
+    validation_mode: AUDIT
+    registered_at: "2026-01-10T09:00:00Z"
+    contact: week7-team@org.com
+
+  # ── Arrow 7: Week 2 → Week 7 (AI Extensions — LLM output validation) ─────
+  - contract_id: week2-verdict-records
+    subscriber_id: week7-ai-contract-extensions
+    subscriber_team: week7
+    fields_consumed:
+      - overall_verdict
+      - overall_score
+      - confidence
+      - scores
+    breaking_fields:
+      - field: overall_verdict
+        reason: >
+          LLM output schema violation rate is computed by checking overall_verdict
+          against the PASS|FAIL|WARN enum. Adding or removing enum values
+          without notification corrupts the violation rate metric.
+      - field: confidence
+        reason: >
+          Confidence field baseline (0.0-1.0) is used for drift detection.
+          Scale change breaks the drift threshold comparison.
+    validation_mode: AUDIT
+    registered_at: "2026-01-10T09:00:00Z"
+    contact: week7-team@org.com
