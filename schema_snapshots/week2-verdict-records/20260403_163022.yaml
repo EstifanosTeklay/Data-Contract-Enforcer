@@ -1,84 +1,75 @@
 contract_id: week2-verdict-records
-snapshot_timestamp: '2026-04-01T18:50:43.077600Z'
+snapshot_timestamp: '2026-04-03T16:30:22.037011Z'
 source_path: outputs/week2/verdicts.jsonl
 schema:
   verdict_id:
     type: string
-    required: &id001 !!python/object/apply:numpy._core.multiarray.scalar
-    - !!python/object/apply:numpy.dtype
-      args:
-      - b1
-      - false
-      - true
-      state: !!python/tuple
-      - 3
-      - '|'
-      - null
-      - null
-      - null
-      - -1
-      - -1
-      - 0
-    - !!binary |
-      AQ==
+    required: true
     description: "Column verdict_id \u2014 null fraction: 0.0%"
     format: uuid
     unique: true
   target_ref:
     type: string
-    required: *id001
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
+    required: true
+    description: File path reference pointing to the source code module or file being
+      evaluated, typically a Python module path in the codebase
+    x_business_rule: value is not null and length(value) > 0 and value matches pattern
+      '*.py' or similar file extension
+    x_cross_column_relationship: Links to verdict_id and rubric_id as the target file
+      being assessed; each target_ref can have multiple verdicts with different rubric
+      versions and overall scores
   rubric_id:
     type: string
-    required: *id001
+    required: true
     description: "Column rubric_id \u2014 null fraction: 0.0%"
     format: uuid
   rubric_version:
     type: string
-    required: *id001
+    required: true
     description: "Column rubric_version \u2014 null fraction: 0.0%"
   overall_verdict:
     type: string
-    required: *id001
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
+    required: true
+    description: Final pass/fail determination for an evaluation based on rubric criteria
+      and scoring thresholds
     enum:
     - PASS
     - FAIL
     - WARN
+    x_business_rule: value in ('PASS', 'FAIL', 'PENDING', 'NOT_EVALUATED')
+    x_cross_column_relationship: Derived from overall_score applied against rubric_version
+      criteria; references verdict_id as primary identifier and rubric_id for evaluation
+      standards
   overall_score:
     type: number
-    required: *id001
+    required: true
     description: "Column overall_score \u2014 null fraction: 0.0%"
     minimum: 1.0
     maximum: 5.0
   confidence:
     type: number
-    required: *id001
+    required: true
     description: Confidence in verdict. Float 0.0-1.0.
     minimum: 0.0
     maximum: 1.0
   evaluated_at:
     type: string
-    required: *id001
+    required: true
     description: "Column evaluated_at \u2014 null fraction: 0.0%"
     format: date-time
   scores.code_quality:
     type: string
-    required: *id001
+    required: true
     description: "Column scores.code_quality \u2014 null fraction: 0.0%"
   scores.test_coverage:
     type: string
-    required: *id001
+    required: true
     description: "Column scores.test_coverage \u2014 null fraction: 0.0%"
   scores.documentation:
     type: string
-    required: *id001
+    required: true
     description: "Column scores.documentation \u2014 null fraction: 0.0%"
   scores.security:
     type: string
-    required: *id001
+    required: true
     description: "Column scores.security \u2014 null fraction: 0.0%"

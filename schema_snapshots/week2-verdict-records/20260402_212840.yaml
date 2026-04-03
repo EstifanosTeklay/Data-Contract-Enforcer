@@ -1,0 +1,54 @@
+contract_id: week2-verdict-records
+snapshot_timestamp: '2026-04-02T21:28:40.708676Z'
+source_path: outputs/week2/verdicts.jsonl
+schema:
+  verdict_id:
+    type: string
+    required: true
+    format: uuid
+    unique: true
+  target_ref:
+    type: string
+    required: true
+  rubric_id:
+    type: string
+    required: true
+    format: uuid
+  rubric_version:
+    type: string
+    required: true
+  overall_verdict:
+    type: string
+    required: true
+    description: Must be exactly one of PASS, FAIL, WARN.
+    enum:
+    - PASS
+    - FAIL
+    - WARN
+  overall_score:
+    type: number
+    required: true
+    minimum: 1.0
+    maximum: 5.0
+  confidence:
+    type: number
+    required: true
+    description: Confidence in verdict. Float 0.0-1.0.
+    minimum: 0.0
+    maximum: 1.0
+  evaluated_at:
+    type: string
+    required: true
+    format: date-time
+  scores.code_quality:
+    type: string
+    required: true
+  scores.test_coverage:
+    type: string
+    required: true
+  scores.documentation:
+    type: string
+    required: true
+  scores.security:
+    type: string
+    required: true

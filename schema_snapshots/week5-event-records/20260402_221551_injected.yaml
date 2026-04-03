@@ -1,0 +1,91 @@
+contract_id: week5-event-records
+snapshot_timestamp: '2026-04-02T22:15:51.745363Z'
+source_path: outputs/week5/events.jsonl
+schema:
+  event_id:
+    type: string
+    required: true
+    description: Primary key. UUIDv4. Unique per event.
+    format: uuid
+    unique: true
+  event_type:
+    type: string
+    required: true
+    description: PascalCase event type name. Registered in schema registry.
+    enum:
+    - ApplicationSubmitted
+    - CreditAnalysisRequested
+    - CreditAnalysisCompleted
+    - FraudScreeningCompleted
+    - ComplianceClearanceIssued
+    - DecisionGenerated
+    - HumanReviewCompleted
+    - ApplicationApproved
+  aggregate_id:
+    type: string
+    required: true
+    description: "ID of the aggregate root. Format: '{type}-{id}' e.g. loan-APEX-COMMERCIAL-001\
+      \ or agent-{id}. NOT a UUID \u2014 stream-scoped identifier."
+    format: uuid
+  aggregate_type:
+    type: string
+    required: true
+    description: PascalCase aggregate type.
+    enum:
+    - LoanApplication
+    - AgentSession
+    - ComplianceCase
+    - AuditRecord
+    - Domain
+  sequence_number:
+    type: integer
+    required: true
+    description: Monotonically increasing per aggregate_id. No gaps, no duplicates.
+    minimum: 1
+    maximum: 9.0
+  schema_version:
+    type: string
+    required: true
+    description: Semantic version string e.g. '1.0' or '2.0'.
+  occurred_at:
+    type: string
+    required: true
+    description: When the event occurred in the domain.
+    format: date-time
+  recorded_at:
+    type: string
+    required: true
+    description: When the event was persisted. Must be >= occurred_at.
+    format: date-time
+  payload.application_id:
+    type: string
+    required: true
+    format: uuid
+  payload.confidence_score:
+    type: integer
+    required: true
+    description: Confidence score for the decision or analysis. MUST be float 0.0-1.0.
+      BREAKING CHANGE if changed to 0-100 scale.
+    minimum: 0
+    maximum: 100
+  metadata.causation_id:
+    type: string
+    required: false
+    description: "Causation ID. Nullable \u2014 null for root events."
+    format: uuid
+  metadata.correlation_id:
+    type: string
+    required: true
+    description: Correlation ID for tracing related events.
+    format: uuid
+  metadata.user_id:
+    type: string
+    required: true
+    description: User or service account that triggered the event. May be 'system'
+      for automated events.
+    format: uuid
+  metadata.source_service:
+    type: string
+    required: true
+    description: Service that produced this event.
+_injection_note: 'INJECTED breaking change for testing: [''payload.confidence_score'']'

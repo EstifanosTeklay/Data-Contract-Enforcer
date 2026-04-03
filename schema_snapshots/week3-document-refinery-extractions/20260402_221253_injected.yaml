@@ -1,5 +1,5 @@
 contract_id: week3-document-refinery-extractions
-snapshot_timestamp: '2026-04-01T19:56:00.950075Z'
+snapshot_timestamp: '2026-04-02T22:12:53.360061Z'
 source_path: outputs/week3/extractions.jsonl
 schema:
   doc_id:
@@ -8,15 +8,6 @@ schema:
     description: Primary key. UUIDv4. Stable across re-extractions of the same source.
     format: uuid
     unique: true
-  source_path:
-    type: string
-    required: true
-    description: 'Column source_path — null fraction: 0.0%'
-  source_hash:
-    type: string
-    required: true
-    description: SHA-256 of the source file. Changes iff source content changes.
-    pattern: ^[a-f0-9]{64}$
   extracted_facts:
     type: array
     required: true
@@ -44,12 +35,11 @@ schema:
   token_count.input:
     type: integer
     required: true
-    description: 'Column token_count.input — null fraction: 0.0%'
     minimum: 2022.0
     maximum: 5976.0
   token_count.output:
     type: integer
     required: true
-    description: 'Column token_count.output — null fraction: 0.0%'
     minimum: 400.0
     maximum: 1196.0
+_injection_note: 'INJECTED breaking change for testing: [''REMOVED:source_path'']'

@@ -1,26 +1,10 @@
 contract_id: week5-event-records
-snapshot_timestamp: '2026-04-01T19:54:04.706295Z'
+snapshot_timestamp: '2026-04-02T22:02:07.069389Z'
 source_path: outputs/week5/events.jsonl
 schema:
   event_id:
     type: string
-    required: &id001 !!python/object/apply:numpy._core.multiarray.scalar
-    - !!python/object/apply:numpy.dtype
-      args:
-      - b1
-      - false
-      - true
-      state: !!python/tuple
-      - 3
-      - '|'
-      - null
-      - null
-      - null
-      - -1
-      - -1
-      - 0
-    - !!binary |
-      AQ==
+    required: true
     description: Primary key. UUIDv4. Unique per event.
     format: uuid
     unique: true
@@ -34,6 +18,9 @@ schema:
     - CreditAnalysisCompleted
     - FraudScreeningCompleted
     - ComplianceClearanceIssued
+    - DecisionGenerated
+    - HumanReviewCompleted
+    - ApplicationApproved
   aggregate_id:
     type: string
     required: true
@@ -52,7 +39,7 @@ schema:
     - Domain
   sequence_number:
     type: integer
-    required: *id001
+    required: true
     description: Monotonically increasing per aggregate_id. No gaps, no duplicates.
     minimum: 1
     maximum: 9.0
@@ -72,16 +59,15 @@ schema:
     format: date-time
   payload.application_id:
     type: string
-    required: *id001
-    description: "Column payload.application_id \u2014 null fraction: 0.0%"
+    required: true
     format: uuid
   payload.confidence_score:
-    type: number
-    required: *id001
+    type: integer
+    required: true
     description: Confidence score for the decision or analysis. MUST be float 0.0-1.0.
       BREAKING CHANGE if changed to 0-100 scale.
-    minimum: 0.0
-    maximum: 1.0
+    minimum: 0
+    maximum: 100
   metadata.causation_id:
     type: string
     required: false
@@ -102,3 +88,4 @@ schema:
     type: string
     required: true
     description: Service that produced this event.
+_injection_note: 'INJECTED breaking change for testing: [''payload.confidence_score'']'
