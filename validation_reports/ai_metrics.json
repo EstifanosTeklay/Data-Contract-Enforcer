@@ -1,0 +1,28 @@
+{
+  "run_date": "2026-04-03T17:49:19.814430Z",
+  "embedding_drift": {
+    "status": "PASS",
+    "drift_score": 0.0,
+    "threshold": 0.15,
+    "sample_size": 200,
+    "message": "Embedding drift within bounds: score=0.0000, threshold=0.15"
+  },
+  "prompt_input_validation": {
+    "status": "PASS",
+    "total_records": 50,
+    "violations": 0,
+    "violation_rate": 0.0,
+    "quarantined_count": 0,
+    "message": "All 50 records pass prompt input schema validation."
+  },
+  "output_schema_violation_rate": {
+    "status": "PASS",
+    "total_outputs": 1,
+    "schema_violations": 0,
+    "violation_rate": 0.0,
+    "baseline_violation_rate": null,
+    "trend": "unknown",
+    "message": "LLM output schema violation rate: 0.00% (unknown). 0 of 1 verdicts failed schema."
+  },
+  "overall_ai_risk": "LOW"
+}
