@@ -547,8 +547,55 @@ def detect_week_from_contract(contract: dict) -> str:
 # Main runner
 # ---------------------------------------------------------------------------
 
+def apply_mode_decision(report: dict, mode: str) -> dict:
+    """
+    Apply enforcement mode decision to the report.
+    AUDIT  — log only, never block. Add mode_decision: LOGGED.
+    WARN   — block on CRITICAL only. Add mode_decision: BLOCKED or LOGGED.
+    ENFORCE— block on CRITICAL and HIGH. Add mode_decision: BLOCKED or LOGGED.
+    """
+    critical_count = sum(
+        1 for r in report["results"]
+        if r["status"] == "FAIL" and r["severity"] == "CRITICAL"
+    )
+    high_count = sum(
+        1 for r in report["results"]
+        if r["status"] == "FAIL" and r["severity"] == "HIGH"
+    )
+
+    if mode == "AUDIT":
+        decision = "LOGGED"
+        reason = "AUDIT mode — violations logged, pipeline not blocked."
+    elif mode == "WARN":
+        if critical_count > 0:
+            decision = "BLOCKED"
+            reason = f"WARN mode — {critical_count} CRITICAL violation(s) detected. Pipeline blocked."
+        else:
+            decision = "LOGGED"
+            reason = "WARN mode — no CRITICAL violations. Pipeline continues with warnings."
+    elif mode == "ENFORCE":
+        if critical_count > 0 or high_count > 0:
+            decision = "BLOCKED"
+            reason = (
+                f"ENFORCE mode — {critical_count} CRITICAL and {high_count} HIGH "
+                f"violation(s) detected. Pipeline blocked."
+            )
+        else:
+            decision = "LOGGED"
+            reason = "ENFORCE mode — no CRITICAL or HIGH violations. Pipeline continues."
+    else:
+        decision = "LOGGED"
+        reason = f"Unknown mode '{mode}' — defaulting to AUDIT behaviour."
+
+    report["enforcement_mode"] = mode
+    report["mode_decision"] = decision
+    report["mode_reason"] = reason
+    return report
+
+
 def run_validation(contract_path: str, data_path: str,
-                   output_path: str = None, verbose: bool = False):
+                   output_path: str = None, verbose: bool = False,
+                   mode: str = "AUDIT"):
 
     if not Path(contract_path).exists():
         print(f"✗ Contract not found: {contract_path}")
@@ -599,6 +646,9 @@ def run_validation(contract_path: str, data_path: str,
 
     # Build report
     report = build_report(contract, data_path, results, snapshot_id)
+
+    # Apply enforcement mode
+    report = apply_mode_decision(report, mode)
 
     # Determine output path
     if not output_path:
@@ -658,6 +708,16 @@ def main():
         help="Output path for validation report JSON (auto-generated if omitted)"
     )
     parser.add_argument(
+        "--mode", type=str, default="AUDIT",
+        choices=["AUDIT", "WARN", "ENFORCE"],
+        help=(
+            "Enforcement mode: "
+            "AUDIT=log only never block; "
+            "WARN=block on CRITICAL; "
+            "ENFORCE=block on CRITICAL and HIGH (default: AUDIT)"
+        )
+    )
+    parser.add_argument(
         "--verbose", action="store_true",
         help="Print all failures to stdout"
     )
@@ -667,7 +727,8 @@ def main():
         contract_path=args.contract,
         data_path=args.data,
         output_path=args.output,
-        verbose=args.verbose
+        verbose=args.verbose,
+        mode=args.mode
     )
 
 
