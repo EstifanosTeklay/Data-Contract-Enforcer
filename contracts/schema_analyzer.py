@@ -25,7 +25,7 @@ Usage:
     # Output to specific file
     python contracts/schema_analyzer.py \
         --contract-id week3-document-refinery-extractions \
-        --output migration_impact_reports/migration_impact_week3-document-refinery-extractions.json
+        --output validation_reports/schema_evolution_week3.json
 
 Requirements:
     pip install pyyaml
@@ -37,6 +37,7 @@ import json
 import os
 import sys
 import uuid
+from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -86,7 +87,8 @@ CHANGE_TAXONOMY = {
         "action": (
             "CRITICAL. Requires migration plan with rollback. "
             "Registry blast radius report mandatory. "
-            "Statistical baseline must be re-established after migration."
+            "Statistical baseline must be re-established after migration. "
+            "Example: float 0.0-1.0 -> int 0-100 is a CRITICAL narrowing change."
         ),
         "confluent_equivalent": "FORWARD mode: blocks. Great Expectations: catches via distribution check.",
     },
@@ -163,6 +165,19 @@ WIDENING_PAIRS = {
     ("number", "string"),
 }
 
+DEFAULT_REPORT_DIR = "migration_impact_reports"
+LINEAGE_GRAPH_PATH = "source_data/lineage_graph.json"
+LINEAGE_SNAPSHOT_PATH = "outputs/week4/lineage_snapshots.jsonl"
+
+CONTRACT_OUTPUT_MAP = {
+    "week1-intent-records": "outputs/week1/intent_records.jsonl",
+    "week2-verdict-records": "outputs/week2/verdicts.jsonl",
+    "week3-document-refinery-extractions": "outputs/week3/extractions.jsonl",
+    "week4-lineage-snapshots": "outputs/week4/lineage_snapshots.jsonl",
+    "week5-event-records": "outputs/week5/events.jsonl",
+    "langsmith-trace-records": "outputs/traces/runs.jsonl",
+}
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -177,13 +192,59 @@ def load_snapshot(path: str) -> dict:
     with open(path) as f:
         return yaml.safe_load(f)
 
-def get_snapshots_for_contract(contract_id: str) -> list:
-    """Return sorted list of snapshot file paths for a contract."""
+def get_snapshots_for_contract(contract_id: str,
+                               since: str = None) -> list:
+    """
+    Return sorted list of snapshot file paths for a contract.
+    If since is provided (e.g. '7 days ago'), filter to snapshots
+    created within that window.
+    """
     snap_dir = Path(f"schema_snapshots/{contract_id}")
     if not snap_dir.exists():
         return []
     files = sorted(snap_dir.glob("*.yaml"))
+
+    if since:
+        # Parse 'N days ago' format
+        cutoff = _parse_since(since)
+        if cutoff:
+            filtered = []
+            for f in files:
+                try:
+                    # Timestamp is encoded in filename: YYYYMMDD_HHMMSS
+                    stem = f.stem.split("_injected")[0]
+                    ts = datetime.strptime(stem, "%Y%m%d_%H%M%S")
+                    ts = ts.replace(tzinfo=timezone.utc)
+                    if ts >= cutoff:
+                        filtered.append(str(f))
+                except ValueError:
+                    filtered.append(str(f))
+            return filtered
+
     return [str(f) for f in files]
+
+
+def _parse_since(since_str: str):
+    """
+    Parse human-readable since strings like '7 days ago', '24 hours ago'.
+    Returns a timezone-aware datetime cutoff or None if unparseable.
+    """
+    import re
+    since_str = since_str.strip().lower()
+    match = re.match(r"(\d+)\s*(day|hour|week)s?\s*ago", since_str)
+    if not match:
+        return None
+    amount = int(match.group(1))
+    unit = match.group(2)
+    from datetime import timedelta
+    now = datetime.now(timezone.utc)
+    if unit == "day":
+        return now - timedelta(days=amount)
+    if unit == "hour":
+        return now - timedelta(hours=amount)
+    if unit == "week":
+        return now - timedelta(weeks=amount)
+    return None
 
 def load_registry() -> dict:
     registry_path = "contract_registry/subscriptions.yaml"
@@ -200,69 +261,188 @@ def get_registry_subscribers(contract_id: str) -> list:
     ]
 
 
-def load_lineage_for_blast_radius() -> dict:
-    """Load latest lineage snapshot for blast radius analysis."""
-    lineage_path = Path("outputs/week4/lineage_snapshots.jsonl")
-    if not lineage_path.exists():
-        return {}
+def load_lineage_graph() -> dict:
+    """Load lineage graph from canonical JSON, with snapshot fallback."""
+    if Path(LINEAGE_GRAPH_PATH).exists():
+        with open(LINEAGE_GRAPH_PATH) as f:
+            return json.load(f)
 
-    snapshots = []
-    with open(lineage_path) as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                snapshots.append(json.loads(line))
-            except json.JSONDecodeError:
-                continue
+    if Path(LINEAGE_SNAPSHOT_PATH).exists():
+        with open(LINEAGE_SNAPSHOT_PATH) as f:
+            snapshots = [json.loads(line) for line in f if line.strip()]
+        return snapshots[-1] if snapshots else {}
 
-    if not snapshots:
-        return {}
-    return snapshots[-1]
+    return {}
 
 
-def _find_affected_nodes_downstream(contract_id: str, lineage: dict) -> list:
-    """BFS downstream from contract output node and return affected node_ids."""
-    if not lineage:
-        return []
+def _coerce_node_id(node: dict) -> str:
+    return str(node.get("id") or node.get("node_id") or "").strip()
 
-    # Duplicated locally from attributor.py by design.
-    contract_output_map = {
-        "week3-document-refinery-extractions": "file::outputs/week3/extractions.jsonl",
-        "week5-event-records": "file::outputs/week5/events.jsonl",
-        "week4-lineage-snapshots": "file::outputs/week4/lineage_snapshots.jsonl",
-        "week2-verdict-records": "file::outputs/week2/verdicts.jsonl",
-        "langsmith-trace-records": "file::outputs/traces/runs.jsonl",
-        "week1-intent-records": "file::outputs/week1/intent_records.jsonl",
-    }
-    start_node = contract_output_map.get(contract_id, "")
-    if not start_node:
-        return []
 
-    edges = lineage.get("edges", [])
+def _coerce_node_type(node: dict) -> str:
+    return str(node.get("node_type") or node.get("type") or "unknown").strip().lower()
+
+
+def _normalize_rel_path(path: str) -> str:
+    if not path:
+        return ""
+    return str(path).replace("\\", "/").strip().lower()
+
+
+def _extract_path_candidates(node: dict) -> set:
+    candidates = set()
+    for key in ["path_or_table", "name", "source_file", "id", "node_id"]:
+        value = node.get(key)
+        if isinstance(value, str) and value.strip():
+            cleaned = _normalize_rel_path(value)
+            candidates.add(cleaned)
+            if cleaned.startswith("file::"):
+                candidates.add(cleaned.replace("file::", "", 1))
+            if "::" in cleaned:
+                candidates.add(cleaned.split("::", 1)[0])
+    return {c for c in candidates if c}
+
+
+def _contract_source_candidates(contract_id: str, source_path: str) -> set:
+    mapped = CONTRACT_OUTPUT_MAP.get(contract_id, "")
+    base = source_path or mapped
+    candidates = set()
+    for raw in [source_path, mapped, base]:
+        if not raw:
+            continue
+        norm = _normalize_rel_path(raw)
+        candidates.add(norm)
+        candidates.add(f"file::{norm}")
+        candidates.add(Path(norm).name)
+    return {c for c in candidates if c}
+
+
+def _build_adjacency(lineage: dict) -> tuple:
+    nodes = lineage.get("nodes", []) or []
+    edges = lineage.get("edges", []) or []
+
+    node_lookup = {}
+    path_index = {}
+    for node in nodes:
+        node_id = _coerce_node_id(node)
+        if not node_id:
+            continue
+        node_lookup[node_id] = node
+        for p in _extract_path_candidates(node):
+            path_index.setdefault(p, set()).add(node_id)
+
     forward_adj = {}
-    for e in edges:
-        src = e.get("source", "")
-        tgt = e.get("target", "")
+    reverse_adj = {}
+    for edge in edges:
+        src = str(edge.get("source", "")).strip()
+        tgt = str(edge.get("target", "")).strip()
         if not src or not tgt:
             continue
-        forward_adj.setdefault(src, []).append(tgt)
+        forward_adj.setdefault(src, set()).add(tgt)
+        reverse_adj.setdefault(tgt, set()).add(src)
 
-    visited = {start_node}
-    queue = [start_node]
-    affected = []
+    return node_lookup, path_index, forward_adj, reverse_adj
+
+
+def _bfs(start_nodes: set, adjacency: dict, max_hops: int = 6) -> list:
+    visited = set(start_nodes)
+    queue = deque((node_id, 0) for node_id in start_nodes)
+    traversal = []
 
     while queue:
-        current = queue.pop(0)
-        for nxt in forward_adj.get(current, []):
+        node_id, depth = queue.popleft()
+        if depth >= max_hops:
+            continue
+        for nxt in adjacency.get(node_id, set()):
             if nxt in visited:
                 continue
             visited.add(nxt)
-            affected.append(nxt)
-            queue.append(nxt)
+            nd = depth + 1
+            traversal.append({"node_id": nxt, "depth": nd})
+            queue.append((nxt, nd))
 
-    return affected
+    return traversal
+
+
+def compute_lineage_blast_radius(contract_id: str,
+                                 old_snapshot: dict,
+                                 new_snapshot: dict,
+                                 breaking_changes: list) -> dict:
+    """Build full lineage blast radius for this contract change."""
+    lineage = load_lineage_graph()
+    if not lineage:
+        return {
+            "lineage_available": False,
+            "start_nodes": [],
+            "downstream_nodes": [],
+            "upstream_nodes": [],
+            "summary": {
+                "start_node_count": 0,
+                "downstream_node_count": 0,
+                "upstream_node_count": 0,
+                "max_downstream_depth": 0,
+                "max_upstream_depth": 0,
+            },
+        }
+
+    node_lookup, path_index, forward_adj, reverse_adj = _build_adjacency(lineage)
+
+    source_path = (new_snapshot or {}).get("source_path") or (old_snapshot or {}).get("source_path")
+    source_candidates = _contract_source_candidates(contract_id, source_path)
+
+    start_nodes = set()
+    for candidate in source_candidates:
+        start_nodes.update(path_index.get(candidate, set()))
+
+    # Fallback: match by contract ID fragments in node paths.
+    if not start_nodes:
+        normalized_contract = _normalize_rel_path(contract_id).replace("-", "_")
+        for path_value, node_ids in path_index.items():
+            if normalized_contract in path_value:
+                start_nodes.update(node_ids)
+
+    downstream = _bfs(start_nodes, forward_adj)
+    upstream = _bfs(start_nodes, reverse_adj)
+
+    changed_fields = sorted({c.get("field", "") for c in breaking_changes if c.get("field")})
+
+    def annotate(nodes_with_depth: list) -> list:
+        annotated = []
+        for entry in nodes_with_depth:
+            node_id = entry["node_id"]
+            node = node_lookup.get(node_id, {})
+            annotated.append({
+                "node_id": node_id,
+                "node_type": _coerce_node_type(node),
+                "name": node.get("name") or node.get("path_or_table") or node_id,
+                "depth": entry["depth"],
+                "potentially_impacted_fields": changed_fields,
+            })
+        return sorted(annotated, key=lambda x: (x["depth"], x["node_id"]))
+
+    start_node_details = []
+    for node_id in sorted(start_nodes):
+        node = node_lookup.get(node_id, {})
+        start_node_details.append({
+            "node_id": node_id,
+            "node_type": _coerce_node_type(node),
+            "name": node.get("name") or node.get("path_or_table") or node_id,
+            "matched_by": sorted(list(source_candidates)),
+        })
+
+    return {
+        "lineage_available": True,
+        "start_nodes": start_node_details,
+        "downstream_nodes": annotate(downstream),
+        "upstream_nodes": annotate(upstream),
+        "summary": {
+            "start_node_count": len(start_node_details),
+            "downstream_node_count": len(downstream),
+            "upstream_node_count": len(upstream),
+            "max_downstream_depth": max([n["depth"] for n in downstream], default=0),
+            "max_upstream_depth": max([n["depth"] for n in upstream], default=0),
+        },
+    }
 
 # ---------------------------------------------------------------------------
 # Change Detection
@@ -457,7 +637,20 @@ def build_migration_checklist(breaking_changes: list,
     checklist = []
     step = 1
 
-    for change in breaking_changes:
+    severity_rank = {"CRITICAL": 0, "HIGH": 1, "MEDIUM": 2, "LOW": 3}
+    ordered_breaking = sorted(
+        breaking_changes,
+        key=lambda c: (
+            severity_rank.get(
+                CHANGE_TAXONOMY.get(c.get("change_type", ""), {}).get("severity", "LOW"),
+                99,
+            ),
+            c.get("field", ""),
+            c.get("change_type", ""),
+        ),
+    )
+
+    for change in ordered_breaking:
         field = change["field"]
         ct = change["change_type"]
         taxonomy = CHANGE_TAXONOMY.get(ct, {})
@@ -541,6 +734,85 @@ def build_rollback_plan(breaking_changes: list, old_snapshot_path: str) -> dict:
     }
 
 
+def _value_to_text(value) -> str:
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, sort_keys=True, ensure_ascii=True)
+    return str(value)
+
+
+def _match_breaking_field(field_name: str, breaking_field_spec) -> tuple:
+    if isinstance(breaking_field_spec, dict):
+        candidate = str(breaking_field_spec.get("field", "")).strip()
+        reason = str(breaking_field_spec.get("reason", "")).strip().replace("\n", " ")
+    else:
+        candidate = str(breaking_field_spec).strip()
+        reason = ""
+
+    if not candidate:
+        return False, "", ""
+
+    matched = (
+        field_name == candidate
+        or field_name.startswith(candidate + ".")
+        or candidate.startswith(field_name + ".")
+    )
+    return matched, candidate, reason
+
+
+def build_consumer_failure_analysis(subscribers: list,
+                                    breaking_changes: list) -> list:
+    """Build per-consumer failure mode analysis from registry + breaking fields."""
+    analyses = []
+    breaking_fields = sorted({c.get("field", "") for c in breaking_changes if c.get("field")})
+
+    for sub in subscribers:
+        matched_fields = set()
+        impact_reasons = []
+        for bf in sub.get("breaking_fields", []):
+            for field in breaking_fields:
+                is_match, candidate, reason = _match_breaking_field(field, bf)
+                if is_match:
+                    matched_fields.add(field)
+                    if reason:
+                        impact_reasons.append(f"{candidate}: {reason}")
+
+        consumed_fields = [str(f).strip() for f in sub.get("fields_consumed", [])]
+        for field in breaking_fields:
+            for consumed in consumed_fields:
+                if not consumed:
+                    continue
+                if field == consumed or field.startswith(consumed + ".") or consumed.startswith(field + "."):
+                    matched_fields.add(field)
+
+        mode = str(sub.get("validation_mode", "AUDIT")).upper()
+        if matched_fields and mode == "ENFORCE":
+            failure_mode = "Pipeline blocked"
+            severity = "CRITICAL"
+        elif matched_fields and mode == "WARN":
+            failure_mode = "Warnings emitted; degraded data may flow"
+            severity = "HIGH"
+        elif matched_fields:
+            failure_mode = "Silent corruption risk"
+            severity = "HIGH"
+        else:
+            failure_mode = "Unaffected"
+            severity = "LOW"
+
+        analyses.append({
+            "subscriber_id": sub.get("subscriber_id"),
+            "subscriber_team": sub.get("subscriber_team"),
+            "validation_mode": mode,
+            "contact": sub.get("contact", ""),
+            "fields_consumed": consumed_fields,
+            "affected_fields": sorted(matched_fields),
+            "failure_mode": failure_mode,
+            "impact_severity": severity,
+            "impact_reasons": impact_reasons,
+        })
+
+    return analyses
+
+
 def build_migration_impact_report(contract_id: str, changes: list,
                                    old_path: str, new_path: str,
                                    old_snapshot: dict,
@@ -552,59 +824,32 @@ def build_migration_impact_report(contract_id: str, changes: list,
         c["change_type"], {}).get("compatible", True)]
 
     subscribers = get_registry_subscribers(contract_id)
-    lineage = load_lineage_for_blast_radius()
-    affected_nodes = _find_affected_nodes_downstream(contract_id, lineage)
-    registry_subscriber_ids = [s.get("subscriber_id", "") for s in subscribers if s.get("subscriber_id")]
-    affected_pipelines = [
-        s.get("subscriber_id", "")
-        for s in subscribers
-        if s.get("validation_mode") == "ENFORCE" and s.get("subscriber_id")
-    ]
 
-    # Per-consumer failure mode analysis
-    consumer_analysis = []
-    for sub in subscribers:
-        affected_fields = [
-            c["field"] for c in breaking
-            if any(
-                c["field"].startswith(bf.get("field", "") if isinstance(bf, dict) else bf)
-                for bf in sub.get("breaking_fields", [])
-            )
-        ]
-        consumer_analysis.append({
-            "subscriber_id": sub["subscriber_id"],
-            "validation_mode": sub.get("validation_mode", "AUDIT"),
-            "affected_fields": affected_fields,
-            "failure_mode": (
-                "Pipeline blocked" if sub.get("validation_mode") == "ENFORCE"
-                and affected_fields else
-                "Silent corruption" if affected_fields else
-                "Unaffected"
-            ),
-            "contact": sub.get("contact", ""),
-        })
-
-    rollback_plan = build_rollback_plan(breaking, old_path) if breaking else {}
+    consumer_analysis = build_consumer_failure_analysis(subscribers, breaking)
+    lineage_blast_radius = compute_lineage_blast_radius(
+        contract_id=contract_id,
+        old_snapshot=old_snapshot,
+        new_snapshot=new_snapshot,
+        breaking_changes=breaking,
+    )
 
     return {
         "report_id": str(uuid.uuid4()),
+        "report_type": "migration_impact",
         "contract_id": contract_id,
         "generated_at": now_iso(),
-        "exact_diff": _format_diff(changes),
+        "snapshot_a": old_path,
+        "snapshot_b": new_path,
+        "total_changes": len(changes),
+        "breaking_changes": len(breaking),
+        "compatible_changes": len(compatible),
         "compatibility_verdict": "BREAKING" if breaking else "COMPATIBLE",
-        "breaking_changes_count": len(breaking),
-        "compatible_changes_count": len(compatible),
-        "blast_radius": {
-            "registry_subscribers": registry_subscriber_ids,
-            "affected_nodes": affected_nodes,
-            "affected_pipelines": affected_pipelines,
-        },
-        "per_consumer_failure_analysis": consumer_analysis,
+        "human_readable_diff": _format_diff(changes),
+        "changes": changes,
+        "lineage_blast_radius": lineage_blast_radius,
+        "consumer_impact": consumer_analysis,
         "migration_checklist": build_migration_checklist(breaking, subscribers),
-        "rollback_plan": rollback_plan,
-        "snapshot_a_path": old_path,
-        "snapshot_b_path": new_path,
-        "changes_detail": changes,
+        "rollback_plan": build_rollback_plan(breaking, old_path) if breaking else None,
     }
 
 
@@ -623,8 +868,8 @@ def _format_diff(changes: list) -> str:
         compat = "✓ COMPATIBLE" if taxonomy.get("compatible") else "✗ BREAKING"
         lines.append(f"[{compat}] {ct} — field: {field}.{prop}")
         if old_v is not None and new_v is not None:
-            lines.append(f"  before: {old_v}")
-            lines.append(f"  after:  {new_v}")
+            lines.append(f"  before: {_value_to_text(old_v)}")
+            lines.append(f"  after:  {_value_to_text(new_v)}")
         lines.append(f"  action: {taxonomy.get('action', 'Review required.')}")
         lines.append("")
     return "\n".join(lines)
@@ -707,25 +952,30 @@ def inject_breaking_change(contract_id: str) -> tuple:
 def analyze(contract_id: str = None,
             snapshot_a: str = None,
             snapshot_b: str = None,
-            output_path: str = None) -> dict:
+            output_path: str = None,
+            since: str = None) -> dict:
     """
     Run schema evolution analysis.
     Either provide contract_id (auto-detects latest two snapshots)
     or provide explicit snapshot_a and snapshot_b paths.
+    since: optional filter e.g. '7 days ago'
     """
     print(f"\n→ SchemaEvolutionAnalyzer")
 
     # Resolve snapshot paths
     if contract_id and not (snapshot_a and snapshot_b):
-        snapshots = get_snapshots_for_contract(contract_id)
+        snapshots = get_snapshots_for_contract(contract_id, since=since)
         if len(snapshots) < 2:
             print(f"  ✗ Need at least 2 snapshots for {contract_id}")
             print(f"    Found: {len(snapshots)}")
+            if since:
+                print(f"    Since filter: '{since}' — try a wider window or omit --since")
             print(f"    Run generator twice or use --inject-change to create a second snapshot")
             sys.exit(1)
         snapshot_a = snapshots[-2]
         snapshot_b = snapshots[-1]
-        print(f"  using latest two snapshots:")
+        print(f"  using latest two snapshots"
+              + (f" (since: {since})" if since else "") + ":")
     else:
         contract_id = contract_id or "unknown"
 
@@ -763,11 +1013,17 @@ def analyze(contract_id: str = None,
 
     # Determine output path
     if not output_path:
-        ensure_dir("migration_impact_reports")
+        ensure_dir(DEFAULT_REPORT_DIR)
         ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
-        output_path = f"migration_impact_reports/migration_impact_{contract_id}_{ts}.json"
+        safe_id = contract_id.replace("-", "_")
+        if breaking:
+            output_path = f"{DEFAULT_REPORT_DIR}/migration_impact_{safe_id}_{ts}.json"
+        else:
+            output_path = f"{DEFAULT_REPORT_DIR}/schema_evolution_{safe_id}_{ts}.json"
 
-    ensure_dir(os.path.dirname(output_path))
+    output_dir = os.path.dirname(output_path)
+    if output_dir:
+        ensure_dir(output_dir)
     with open(output_path, "w") as f:
         json.dump(report, f, indent=2, default=str)
 
@@ -802,11 +1058,12 @@ def main():
         help="Path to newer snapshot YAML"
     )
     parser.add_argument(
+        "--since", type=str, default=None,
+        help="Filter snapshots to those created within this window e.g. '7 days ago'"
+    )
+    parser.add_argument(
         "--output", type=str, default=None,
-        help=(
-            "Output path for migration impact report JSON "
-            "(default: migration_impact_reports/migration_impact_<contract_id>_<timestamp>.json)"
-        )
+        help="Output path for migration impact report JSON"
     )
     parser.add_argument(
         "--inject-change", action="store_true",
@@ -828,14 +1085,16 @@ def main():
             contract_id=args.contract_id,
             snapshot_a=snap_a,
             snapshot_b=snap_b,
-            output_path=args.output
+            output_path=args.output,
+            since=args.since
         )
     else:
         analyze(
             contract_id=args.contract_id,
             snapshot_a=args.snapshot_a,
             snapshot_b=args.snapshot_b,
-            output_path=args.output
+            output_path=args.output,
+            since=args.since
         )
 
 
