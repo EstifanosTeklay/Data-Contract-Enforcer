@@ -15,21 +15,30 @@ Usage:
     python contracts/generator.py --all   # runs all known sources
 
 Requirements:
-    pip install pandas pyyaml anthropic
+    pip install pandas pyyaml requests python-dotenv
 """
 
 import argparse
 import hashlib
 import json
-import math
 import os
 import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import requests
 import pandas as pd
 import yaml
+
+try:
+    from dotenv import load_dotenv
+    HAS_DOTENV = True
+except ImportError:
+    HAS_DOTENV = False
+
+if HAS_DOTENV:
+    load_dotenv()
 
 # Optional: ydata-profiling for deep stats (graceful fallback if not installed)
 try:
@@ -37,12 +46,6 @@ try:
     HAS_PROFILING = True
 except ImportError:
     HAS_PROFILING = False
-
-try:
-    import anthropic
-    HAS_ANTHROPIC = True
-except ImportError:
-    HAS_ANTHROPIC = False
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -189,32 +192,6 @@ def all_unique_values(series: pd.Series) -> list:
     except Exception:
         return []
 
-
-def to_builtin(value):
-    """Recursively convert pandas/numpy scalars into plain Python YAML-safe types."""
-    if isinstance(value, dict):
-        return {to_builtin(k): to_builtin(v) for k, v in value.items()}
-    if isinstance(value, list):
-        return [to_builtin(v) for v in value]
-    if isinstance(value, tuple):
-        return [to_builtin(v) for v in value]
-
-    if hasattr(value, "item") and callable(getattr(value, "item")):
-        try:
-            value = value.item()
-        except Exception:
-            pass
-
-    if isinstance(value, bool):
-        return bool(value)
-    if isinstance(value, int):
-        return int(value)
-    if isinstance(value, float):
-        if math.isnan(value) or math.isinf(value):
-            return None
-        return float(value)
-    return value
-
 # ---------------------------------------------------------------------------
 # Step 1 & 2 — Structural + Statistical Profiling
 # ---------------------------------------------------------------------------
@@ -287,8 +264,79 @@ def profile_dataframe(df: pd.DataFrame) -> dict:
                         entry["confidence_scale_warning"] = (
                             f"WARNING: mean={mean:.4f} < 0.01 — confidence appears broken"
                         )
-        profile[col] = entry
+        return profile  # early return pattern — continue below
 
+    # (Python requires loop to finish — restructure)
+    return profile
+
+
+def profile_dataframe(df: pd.DataFrame) -> dict:  # noqa: F811
+    profile = {}
+    for col in df.columns:
+        s = df[col]
+        col_type = infer_type(s)
+
+        # Columns containing lists/dicts can't be hashed directly.
+        try:
+            s_hash = s.apply(lambda x: json.dumps(x, sort_keys=True) if isinstance(x, (list, dict)) else x)
+        except Exception:
+            s_hash = s.astype(str)
+
+        try:
+            cardinality = int(s_hash.nunique())
+        except TypeError:
+            cardinality = -1
+
+        try:
+            sv = sample_values(s_hash)
+        except Exception:
+            sv = []
+
+        all_vals = []
+        if cardinality <= 20:
+            all_vals = all_unique_values(s_hash)
+
+        entry = {
+            "name": col,
+            "dtype": str(s.dtype),
+            "inferred_type": col_type,
+            "null_fraction": null_fraction(s),
+            "cardinality": cardinality,
+            "sample_values": sv,
+            "all_values": all_vals,
+        }
+        if col_type in ("integer", "number"):
+            numeric = pd.to_numeric(s, errors="coerce").dropna()
+            if len(numeric) > 0:
+                entry["stats"] = {
+                    "min": float(numeric.min()),
+                    "max": float(numeric.max()),
+                    "mean": float(numeric.mean()),
+                    "p25": float(numeric.quantile(0.25)),
+                    "p50": float(numeric.median()),
+                    "p75": float(numeric.quantile(0.75)),
+                    "p95": float(numeric.quantile(0.95)),
+                    "p99": float(numeric.quantile(0.99)),
+                    "stddev": float(numeric.std()),
+                }
+                if "confidence" in col.lower():
+                    mn = entry["stats"]["min"]
+                    mx = entry["stats"]["max"]
+                    mean = entry["stats"]["mean"]
+                    if mx > 1.0:
+                        entry["confidence_scale_warning"] = (
+                            f"CRITICAL: max={mx:.2f} > 1.0 — "
+                            "confidence appears to be 0-100 scale, not 0.0-1.0"
+                        )
+                    elif mean > 0.99:
+                        entry["confidence_scale_warning"] = (
+                            f"WARNING: mean={mean:.4f} > 0.99 — values appear clamped"
+                        )
+                    elif mean < 0.01:
+                        entry["confidence_scale_warning"] = (
+                            f"WARNING: mean={mean:.4f} < 0.01 — confidence appears broken"
+                        )
+        profile[col] = entry
     return profile
 
 # ---------------------------------------------------------------------------
@@ -359,14 +407,14 @@ def find_downstream_consumers(week_key: str, lineage: dict) -> list:
 def llm_annotate_column(col_name: str, table_name: str,
                          sample_values: list, adjacent_cols: list) -> dict:
     """
-    Call Claude to annotate ambiguous columns.
+    Call Claude via OpenRouter to annotate ambiguous columns.
     Returns annotation dict or empty dict if unavailable.
     """
-    if not HAS_ANTHROPIC:
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
         return {}
 
     try:
-        client = anthropic.Anthropic()
         prompt = f"""You are a data engineer annotating a data contract.
 
 Column: {col_name}
@@ -381,16 +429,35 @@ Respond ONLY with a JSON object (no markdown) containing:
   "cross_column_relationship": "any relationship with adjacent columns or null"
 }}"""
 
-        response = client.messages.create(
-            model="claude-sonnet-4-20250514",
-            max_tokens=300,
-            messages=[{"role": "user", "content": prompt}]
+        headers = {
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "http://localhost",
+            "X-Title": "DataContractEnforcer"
+        }
+        payload = {
+            "model": "anthropic/claude-sonnet-4-5",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 300
+        }
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=15
         )
-        text = response.content[0].text.strip()
+        response.raise_for_status()
+        data = response.json()
+        text = data["choices"][0]["message"]["content"].strip()
         text = re.sub(r"```json|```", "", text).strip()
-        return json.loads(text)
-    except Exception as e:
-        return {"description": f"Auto-annotation unavailable: {e}"}
+        parsed = json.loads(text)
+        return {
+            "description": parsed.get("description", ""),
+            "business_rule": parsed.get("business_rule", ""),
+            "cross_column_relationship": parsed.get("cross_column_relationship"),
+        }
+    except Exception:
+        return {}
 
 # ---------------------------------------------------------------------------
 # Step 5 — Contract YAML Builder
@@ -609,6 +676,8 @@ def build_contract(week_key: str, source_path: str,
             schema[col]["description"] = ann["description"]
         if col in schema and ann.get("business_rule"):
             schema[col]["x_business_rule"] = ann["business_rule"]
+        if col in schema and ann.get("cross_column_relationship"):
+            schema[col]["x_cross_column_relationship"] = ann["cross_column_relationship"]
 
     contract = {
         "kind": "DataContract",
@@ -644,6 +713,8 @@ def build_contract(week_key: str, source_path: str,
             "downstream": downstream
         }
     }
+    if llm_annotations:
+        contract["llm_annotations"] = llm_annotations
     return contract
 
 # ---------------------------------------------------------------------------
@@ -791,6 +862,47 @@ def build_dbt_schema(week_key: str, schema: dict) -> dict:
 # Schema Snapshot
 # ---------------------------------------------------------------------------
 
+def write_statistical_baselines(week_key: str, col_profile: dict):
+    """
+    Write mean and stddev for all numeric columns to schema_snapshots/baselines.json.
+    This is called by the ContractGenerator on every run so baselines stay current.
+    """
+    baseline_path = "schema_snapshots/baselines.json"
+    contract_id = CONTRACT_IDS.get(week_key, week_key)
+
+    # Load existing baselines
+    existing = {}
+    if Path(baseline_path).exists():
+        try:
+            with open(baseline_path) as f:
+                existing = json.load(f)
+        except Exception:
+            existing = {}
+
+    if contract_id not in existing:
+        existing[contract_id] = {}
+
+    # Write mean + stddev for every numeric column
+    updated = False
+    for col, info in col_profile.items():
+        if "stats" in info:
+            st = info["stats"]
+            existing[contract_id][col] = {
+                "mean": st["mean"],
+                "std": st["stddev"],
+                "min": st["min"],
+                "max": st["max"],
+                "established_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            }
+            updated = True
+
+    if updated:
+        ensure_dir(os.path.dirname(baseline_path))
+        with open(baseline_path, "w") as f:
+            json.dump(existing, f, indent=2)
+        print(f"  ✓ baselines written → {baseline_path}")
+
+
 def save_schema_snapshot(week_key: str, schema: dict, source_path: str):
     """Save timestamped schema snapshot for evolution tracking."""
     contract_id = CONTRACT_IDS.get(week_key, week_key)
@@ -805,13 +917,7 @@ def save_schema_snapshot(week_key: str, schema: dict, source_path: str):
         "schema": schema
     }
     with open(snap_path, "w") as f:
-        yaml.safe_dump(
-            to_builtin(snap),
-            f,
-            default_flow_style=False,
-            sort_keys=False,
-            allow_unicode=True,
-        )
+        yaml.dump(snap, f, default_flow_style=False, sort_keys=False)
     print(f"  ✓ snapshot → {snap_path}")
 
 # ---------------------------------------------------------------------------
@@ -819,7 +925,8 @@ def save_schema_snapshot(week_key: str, schema: dict, source_path: str):
 # ---------------------------------------------------------------------------
 
 def generate_contract(source_path: str, output_dir: str,
-                       annotate: bool = False, verbose: bool = False):
+                       annotate: bool = False, verbose: bool = False,
+                       fast: bool = False):
     """Full pipeline: profile → lineage → annotate → write contracts."""
 
     if not Path(source_path).exists():
@@ -846,6 +953,9 @@ def generate_contract(source_path: str, output_dir: str,
         if "confidence_scale_warning" in info:
             print(f"  ⚠  {info['confidence_scale_warning']}")
 
+    # Write statistical baselines to schema_snapshots/baselines.json
+    write_statistical_baselines(week_key, col_profile)
+
     # Step 3: Lineage context
     lineage = load_lineage_graph()
     downstream = find_downstream_consumers(week_key, lineage)
@@ -853,7 +963,9 @@ def generate_contract(source_path: str, output_dir: str,
 
     # Step 4: LLM annotation (optional, ambiguous columns only)
     llm_annotations = {}
-    if annotate and HAS_ANTHROPIC:
+    if annotate and not fast:
+        if not os.getenv("OPENROUTER_API_KEY"):
+            print("  ⚠  --annotate enabled but OPENROUTER_API_KEY not found. Skipping LLM annotation.")
         cols = list(df.columns)
         ambiguous = [
             c for c in cols
@@ -871,6 +983,10 @@ def generate_contract(source_path: str, output_dir: str,
             if ann:
                 llm_annotations[col] = ann
                 print(f"  ✓ LLM annotated: {col}")
+        if annotate and os.getenv("OPENROUTER_API_KEY") and not llm_annotations:
+            print("  ⚠  No LLM annotations were produced for this dataset.")
+    elif annotate and fast:
+        print("  ⚡ Fast mode enabled — skipping LLM annotation.")
 
     # Step 5: Build and write contract
     ensure_dir(output_dir)
@@ -893,26 +1009,15 @@ def generate_contract(source_path: str, output_dir: str,
     contract_file = f"{output_dir}/{name_map.get(week_key, week_key)}.yaml"
 
     with open(contract_file, "w") as f:
-        yaml.safe_dump(
-            to_builtin(contract),
-            f,
-            default_flow_style=False,
-            sort_keys=False,
-            allow_unicode=True,
-        )
+        yaml.dump(contract, f, default_flow_style=False,
+                  sort_keys=False, allow_unicode=True)
     print(f"  ✓ contract → {contract_file}")
 
     # dbt schema.yml
     dbt_schema = build_dbt_schema(week_key, contract["schema"])
     dbt_file = f"{output_dir}/{name_map.get(week_key, week_key)}_dbt.yml"
     with open(dbt_file, "w") as f:
-        yaml.safe_dump(
-            to_builtin(dbt_schema),
-            f,
-            default_flow_style=False,
-            sort_keys=False,
-            allow_unicode=True,
-        )
+        yaml.dump(dbt_schema, f, default_flow_style=False, sort_keys=False)
     print(f"  ✓ dbt schema → {dbt_file}")
 
     # Schema snapshot
@@ -948,7 +1053,11 @@ def main():
     )
     parser.add_argument(
         "--annotate", action="store_true",
-        help="Enable LLM annotation for ambiguous columns (requires ANTHROPIC_API_KEY)"
+        help="Enable LLM annotation for ambiguous columns (requires OPENROUTER_API_KEY)"
+    )
+    parser.add_argument(
+        "--fast", action="store_true",
+        help="Fast mode: skip LLM annotation calls even when --annotate is set"
     )
     parser.add_argument(
         "--verbose", action="store_true",
@@ -965,12 +1074,14 @@ def main():
         for key, path in KNOWN_SOURCES.items():
             if Path(path).exists():
                 generate_contract(path, args.output,
-                                  annotate=args.annotate, verbose=args.verbose)
+                                  annotate=args.annotate, verbose=args.verbose,
+                                  fast=args.fast)
             else:
                 print(f"\n  ⚠  Skipping {key} — {path} not found")
     else:
         generate_contract(args.source, args.output,
-                          annotate=args.annotate, verbose=args.verbose)
+                          annotate=args.annotate, verbose=args.verbose,
+                          fast=args.fast)
 
     print("\n=== ContractGenerator complete ===")
 
