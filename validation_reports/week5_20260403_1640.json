@@ -1,15 +1,15 @@
 {
-  "report_id": "6c9e8e9b-5a29-4c30-a6be-043f66b8e7be",
+  "report_id": "7229f60f-366f-4bc3-b504-3810330b39b3",
   "contract_id": "week5-event-records",
-  "snapshot_id": "c80f23b96b5d32068d685d52a8e41bf80aec8ca39995b982b8af0866f71cca82",
+  "snapshot_id": "5da5855c09f28b94c13545a8389d31ad7c9f6e03c3eb3a9b0209721d912caa98",
   "data_path": "outputs/week5/events.jsonl",
-  "run_timestamp": "2026-04-01T19:07:12.940464Z",
-  "total_checks": 30,
-  "passed": 26,
-  "failed": 4,
+  "run_timestamp": "2026-04-03T16:40:29.544434Z",
+  "total_checks": 31,
+  "passed": 28,
+  "failed": 3,
   "warned": 0,
   "errored": 0,
-  "pass_rate": 0.8667,
+  "pass_rate": 0.9032,
   "results": [
     {
       "check_id": "week5-event-records.event_id.not_null",
@@ -75,17 +75,13 @@
       "check_id": "week5-event-records.event_type.enum",
       "column_name": "event_type",
       "check_type": "enum",
-      "status": "FAIL",
-      "actual_value": "found: ['DecisionGenerated', 'HumanReviewCompleted', 'ApplicationApproved']",
-      "expected": "one of ['ApplicationSubmitted', 'CreditAnalysisRequested', 'CreditAnalysisCompleted', 'FraudScreeningCompleted', 'ComplianceClearanceIssued']",
-      "severity": "CRITICAL",
-      "records_failing": 18,
-      "sample_failing": [
-        "DecisionGenerated",
-        "HumanReviewCompleted",
-        "ApplicationApproved"
-      ],
-      "message": "18 values not in allowed set ['ApplicationSubmitted', 'CreditAnalysisRequested', 'CreditAnalysisCompleted', 'FraudScreeningCompleted', 'ComplianceClearanceIssued']."
+      "status": "PASS",
+      "actual_value": "all values in ['ApplicationSubmitted', 'CreditAnalysisRequested', 'CreditAnalysisCompleted', 'FraudScreeningCompleted', 'ComplianceClearanceIssued', 'DecisionGenerated', 'HumanReviewCompleted', 'ApplicationApproved']",
+      "expected": "one of ['ApplicationSubmitted', 'CreditAnalysisRequested', 'CreditAnalysisCompleted', 'FraudScreeningCompleted', 'ComplianceClearanceIssued', 'DecisionGenerated', 'HumanReviewCompleted', 'ApplicationApproved']",
+      "severity": "LOW",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": ""
     },
     {
       "check_id": "week5-event-records.aggregate_id.not_null",
@@ -128,6 +124,18 @@
       "message": ""
     },
     {
+      "check_id": "week5-event-records.aggregate_type.enum",
+      "column_name": "aggregate_type",
+      "check_type": "enum",
+      "status": "PASS",
+      "actual_value": "all values in ['LoanApplication', 'AgentSession', 'ComplianceCase', 'AuditRecord', 'Domain']",
+      "expected": "one of ['LoanApplication', 'AgentSession', 'ComplianceCase', 'AuditRecord', 'Domain']",
+      "severity": "LOW",
+      "records_failing": 0,
+      "sample_failing": [],
+      "message": ""
+    },
+    {
       "check_id": "week5-event-records.sequence_number.not_null",
       "column_name": "sequence_number",
       "check_type": "not_null",
@@ -156,12 +164,12 @@
       "column_name": "sequence_number",
       "check_type": "statistical_drift",
       "status": "PASS",
-      "actual_value": "baseline established: mean=4.8000",
-      "expected": "baseline run",
+      "actual_value": "mean=4.8000, std=2.5873",
+      "expected": "within 2\u03c3 of baseline mean=4.8000",
       "severity": "LOW",
       "records_failing": 0,
       "sample_failing": [],
-      "message": "First run \u2014 baseline established."
+      "message": "Statistical drift OK: mean=4.8000, baseline=4.8000, deviation=0.0\u03c3."
     },
     {
       "check_id": "week5-event-records.schema_version.not_null",
@@ -269,23 +277,23 @@
       "check_type": "range",
       "status": "PASS",
       "actual_value": "min=0.6600, max=0.9700",
-      "expected": "[0.66,0.97]",
+      "expected": "[0.0,1.0]",
       "severity": "LOW",
       "records_failing": 0,
       "sample_failing": [],
-      "message": "All values within [0.66,0.97]."
+      "message": "All values within [0.0,1.0]."
     },
     {
       "check_id": "week5-event-records.payload.confidence_score.statistical_drift",
       "column_name": "payload.confidence_score",
       "check_type": "statistical_drift",
       "status": "PASS",
-      "actual_value": "baseline established: mean=0.8196",
-      "expected": "baseline run",
+      "actual_value": "mean=0.8088, std=0.0912",
+      "expected": "within 2\u03c3 of baseline mean=0.8088",
       "severity": "LOW",
       "records_failing": 0,
       "sample_failing": [],
-      "message": "First run \u2014 baseline established."
+      "message": "Statistical drift OK: mean=0.8088, baseline=0.8088, deviation=0.0\u03c3."
     },
     {
       "check_id": "week5-event-records.metadata.causation_id.pattern",
@@ -387,5 +395,8 @@
       "sample_failing": [],
       "message": ""
     }
-  ]
+  ],
+  "enforcement_mode": "ENFORCE",
+  "mode_decision": "BLOCKED",
+  "mode_reason": "ENFORCE mode \u2014 0 CRITICAL and 3 HIGH violation(s) detected. Pipeline blocked."
 }

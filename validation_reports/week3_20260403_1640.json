@@ -1,9 +1,9 @@
 {
-  "report_id": "7b43fa22-bee6-4be7-a7d9-006f0875a460",
+  "report_id": "e93c9339-1080-46b3-93aa-af245cd8f86f",
   "contract_id": "week3-document-refinery-extractions",
-  "snapshot_id": "5ca72820b96a69437ad9872c4f3fb515ce5a90a50e0ecf197654c4c9220378ea",
+  "snapshot_id": "f91aa52908faf95715e969ac6295019ea1a716ede931baf5fa45e0ea649bbd61",
   "data_path": "outputs/week3/extractions.jsonl",
-  "run_timestamp": "2026-04-01T19:11:45.006798Z",
+  "run_timestamp": "2026-04-03T16:40:07.213549Z",
   "total_checks": 23,
   "passed": 23,
   "failed": 0,
@@ -160,7 +160,7 @@
       "column_name": "processing_time_ms",
       "check_type": "range",
       "status": "PASS",
-      "actual_value": "min=933.0000, max=39630.0000",
+      "actual_value": "min=804.0000, max=39630.0000",
       "expected": "[1,39630.0]",
       "severity": "LOW",
       "records_failing": 0,
@@ -172,12 +172,12 @@
       "column_name": "processing_time_ms",
       "check_type": "statistical_drift",
       "status": "PASS",
-      "actual_value": "baseline established: mean=8932.6800",
-      "expected": "baseline run",
+      "actual_value": "mean=8802.0800, std=6688.2827",
+      "expected": "within 2\u03c3 of baseline mean=8802.0800",
       "severity": "LOW",
       "records_failing": 0,
       "sample_failing": [],
-      "message": "First run \u2014 baseline established."
+      "message": "Statistical drift OK: mean=8802.0800, baseline=8802.0800, deviation=0.0\u03c3."
     },
     {
       "check_id": "week3-document-refinery-extractions.extracted_at.not_null",
@@ -220,24 +220,24 @@
       "column_name": "token_count.input",
       "check_type": "range",
       "status": "PASS",
-      "actual_value": "min=2042.0000, max=5949.0000",
-      "expected": "[2042.0,5949.0]",
+      "actual_value": "min=2022.0000, max=5976.0000",
+      "expected": "[2022.0,5976.0]",
       "severity": "LOW",
       "records_failing": 0,
       "sample_failing": [],
-      "message": "All values within [2042.0,5949.0]."
+      "message": "All values within [2022.0,5976.0]."
     },
     {
       "check_id": "week3-document-refinery-extractions.token_count.input.statistical_drift",
       "column_name": "token_count.input",
       "check_type": "statistical_drift",
       "status": "PASS",
-      "actual_value": "baseline established: mean=3959.5800",
-      "expected": "baseline run",
+      "actual_value": "mean=4159.0600, std=1272.9903",
+      "expected": "within 2\u03c3 of baseline mean=4159.0600",
       "severity": "LOW",
       "records_failing": 0,
       "sample_failing": [],
-      "message": "First run \u2014 baseline established."
+      "message": "Statistical drift OK: mean=4159.0600, baseline=4159.0600, deviation=0.0\u03c3."
     },
     {
       "check_id": "week3-document-refinery-extractions.token_count.output.not_null",
@@ -256,24 +256,24 @@
       "column_name": "token_count.output",
       "check_type": "range",
       "status": "PASS",
-      "actual_value": "min=401.0000, max=1197.0000",
-      "expected": "[401.0,1197.0]",
+      "actual_value": "min=400.0000, max=1196.0000",
+      "expected": "[400.0,1196.0]",
       "severity": "LOW",
       "records_failing": 0,
       "sample_failing": [],
-      "message": "All values within [401.0,1197.0]."
+      "message": "All values within [400.0,1196.0]."
     },
     {
       "check_id": "week3-document-refinery-extractions.token_count.output.statistical_drift",
       "column_name": "token_count.output",
       "check_type": "statistical_drift",
       "status": "PASS",
-      "actual_value": "baseline established: mean=701.4400",
-      "expected": "baseline run",
+      "actual_value": "mean=849.8800, std=247.7471",
+      "expected": "within 2\u03c3 of baseline mean=849.8800",
       "severity": "LOW",
       "records_failing": 0,
       "sample_failing": [],
-      "message": "First run \u2014 baseline established."
+      "message": "Statistical drift OK: mean=849.8800, baseline=849.8800, deviation=0.0\u03c3."
     },
     {
       "check_id": "week3-document-refinery-extractions.row_count",
@@ -287,5 +287,8 @@
       "sample_failing": [],
       "message": ""
     }
-  ]
+  ],
+  "enforcement_mode": "AUDIT",
+  "mode_decision": "LOGGED",
+  "mode_reason": "AUDIT mode \u2014 violations logged, pipeline not blocked."
 }
