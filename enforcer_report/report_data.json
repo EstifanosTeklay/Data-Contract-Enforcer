@@ -1,0 +1,137 @@
+{
+  "report_id": "enforcer-report-20260403",
+  "generated_at": "2026-04-03T17:55:20.820120Z",
+  "generated_by": "contracts/report_generator.py",
+  "report_period": "past 7 days",
+  "section_1_data_health": {
+    "data_health_score": 94.4,
+    "base_score": 94.4,
+    "critical_penalty": 0,
+    "narrative": "Data systems are healthy. No critical violations detected.",
+    "total_checks": 54,
+    "total_passed": 51,
+    "total_failed": 3,
+    "total_warned": 0,
+    "total_errored": 0,
+    "critical_violations": 0,
+    "contracts_monitored": 2
+  },
+  "section_2_violations": {
+    "total_violations": 4,
+    "by_severity": {
+      "CRITICAL": 1,
+      "HIGH": 3
+    },
+    "top_3_violations": [
+      {
+        "violation_id": "2678136e-4d39-437d-9a33-eb112829f070",
+        "severity": "CRITICAL",
+        "system": "Week 3 Document Refinery",
+        "field": "extracted_facts.confidence",
+        "check_type": "range",
+        "injected": true,
+        "plain_language": "[INJECTED TEST] The Week 3 Document Refinery produced data where the field 'extracted_facts.confidence' failed a range check. confidence is in 0-100 range, not 0.0-1.0. Breaking change detected. Downstream systems affected: week4-cartographer, week7-ai-contract-extensions."
+      },
+      {
+        "violation_id": "9ae7825f-22e7-4690-b11f-0c0c9939070b",
+        "severity": "HIGH",
+        "system": "Week 5 Event Sourcing Platform",
+        "field": "aggregate_id",
+        "check_type": "pattern",
+        "injected": false,
+        "plain_language": "The Week 5 Event Sourcing Platform produced data where the field 'aggregate_id' failed a pattern check. 50 values do not match pattern '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'. Downstream systems affected: week7-contract-enforcer."
+      },
+      {
+        "violation_id": "1ad41ea4-70a4-46b0-b86d-0e2b419d748b",
+        "severity": "HIGH",
+        "system": "Week 5 Event Sourcing Platform",
+        "field": "payload.application_id",
+        "check_type": "pattern",
+        "injected": false,
+        "plain_language": "The Week 5 Event Sourcing Platform produced data where the field 'payload.application_id' failed a pattern check. 50 values do not match pattern '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'. Downstream systems affected: week7-contract-enforcer."
+      }
+    ]
+  },
+  "section_3_schema_changes": {
+    "schema_changes": [
+      {
+        "contract_id": "week3-document-refinery-extractions",
+        "system": "Week 3 Document Refinery",
+        "compatibility_verdict": "BREAKING",
+        "breaking_changes": 1,
+        "total_changes": 1,
+        "action_required": "Immediate action required \u2014 breaking changes detected.",
+        "change_summary": [
+          "NARROW_TYPE: extraction_model (string \u2192 integer)"
+        ]
+      },
+      {
+        "contract_id": "week3-document-refinery-extractions",
+        "system": "Week 3 Document Refinery",
+        "compatibility_verdict": "BREAKING",
+        "breaking_changes": 1,
+        "total_changes": 1,
+        "action_required": "Immediate action required \u2014 breaking changes detected.",
+        "change_summary": [
+          "NARROW_TYPE: extracted_at (string \u2192 integer)"
+        ]
+      }
+    ]
+  },
+  "section_4_ai_risk": {
+    "overall_ai_risk": "LOW",
+    "embedding_drift": {
+      "status": "PASS",
+      "drift_score": 0.0,
+      "threshold": 0.15,
+      "narrative": "Embedding drift is within acceptable bounds (score=0.0000, threshold=0.15)."
+    },
+    "prompt_validation": {
+      "status": "PASS",
+      "violation_rate": 0.0,
+      "quarantined": 0,
+      "narrative": "All 50 records pass prompt input schema validation."
+    },
+    "output_schema": {
+      "status": "PASS",
+      "violation_rate": 0.0,
+      "trend": "unknown",
+      "narrative": "LLM output schema violation rate is stable (0.00%)."
+    }
+  },
+  "section_5_recommendations": [
+    {
+      "priority": 1,
+      "risk_level": "HIGH",
+      "system": "Week 5 Event Sourcing Platform",
+      "action": "Update src/event_store.py to fix contract clause week5-event-records.aggregate_id.pattern: field 'aggregate_id' outputs 50 non-matching values but contract week5-event-records requires matches pattern: ^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$. This is a HIGH severity violation \u2014 pipeline blocked in ENFORCE mode.",
+      "contract_clause": "week5-event-records.aggregate_id.pattern",
+      "file_path": "src/event_store.py",
+      "estimated_impact": "Resolves HIGH violation in Week 5 Event Sourcing Platform and restores ENFORCE mode compatibility."
+    },
+    {
+      "priority": 2,
+      "risk_level": "HIGH",
+      "system": "Week 3 Document Refinery",
+      "action": "Coordinate schema migration for Week 3 Document Refinery before next deployment: 1 breaking change(s) detected in contract week3-document-refinery-extractions. First breaking change: NARROW_TYPE: extraction_model (string \u2192 integer). Run: python contracts/schema_analyzer.py --contract-id week3-document-refinery-extractions to generate full migration checklist and rollback plan.",
+      "contract_clause": "week3-document-refinery-extractions",
+      "file_path": "migration_impact_reports/",
+      "estimated_impact": "Prevents silent data corruption in downstream consumers caused by unannounced breaking schema change."
+    },
+    {
+      "risk_level": "LOW",
+      "system": "All systems",
+      "action": "Run python contracts/generator.py --all --annotate weekly to refresh contract clauses and update baselines in schema_snapshots/baselines.json. Stale contracts produce false positives that erode team trust in enforcement.",
+      "contract_clause": "all contracts \u2014 statistical baseline clauses",
+      "file_path": "schema_snapshots/baselines.json",
+      "estimated_impact": "Prevents contract staleness \u2014 the most common production enforcement failure mode per DOMAIN_NOTES.md.",
+      "priority": 3
+    }
+  ],
+  "metadata": {
+    "contracts_monitored": 2,
+    "schema_snapshots_tracked": 6,
+    "violation_log_entries": 4,
+    "ai_metrics_available": true
+  }
+}
