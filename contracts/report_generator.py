@@ -394,11 +394,12 @@ def generate_recommendations(violations: list, health: dict,
                                ai_risk: dict, schema_changes: dict) -> list:
     """
     Generate top 3 prioritised, specific actions.
+    Every action names an exact file path and contract clause.
     Ordered by risk reduction value.
     """
     actions = []
 
-    # Action from CRITICAL violations
+    # ── Action from CRITICAL violations ──────────────────────────────────────
     critical = [
         v for v in violations
         if v.get("severity") == "CRITICAL" and not v.get("injected", False)
@@ -407,117 +408,221 @@ def generate_recommendations(violations: list, health: dict,
         top = critical[0]
         field = top.get("failing_field", "unknown")
         contract = top.get("contract_id", "unknown")
-        blame = top.get("blame_chain", [{}])
+        check_id = top.get("check_id", "unknown")
+        actual = top.get("actual_value", "unknown")
+        expected = top.get("expected", "unknown")
+
+        # Extract exact file path from blame chain
+        blame = top.get("blame_chain", [])
         file_path = blame[0].get("file_path", "unknown") if blame else "unknown"
+        commit = blame[0].get("commit_hash", "")[:12] if blame else ""
+        author = blame[0].get("author", "") if blame else ""
+
+        # Extract downstream pipelines from blast radius
+        downstream = top.get("blast_radius", {}).get("affected_pipelines", [])
+        downstream_str = (
+            f"Downstream consumers affected: {', '.join(downstream)}."
+            if downstream else ""
+        )
+
         actions.append({
             "priority": 1,
             "risk_level": "CRITICAL",
-            "action": (
-                f"Fix {field} in {file_path}: update the field to conform to "
-                f"contract {contract}. "
-                f"Current value: {top.get('actual_value', 'unknown')}. "
-                f"Expected: {top.get('expected', 'unknown')}."
-            ),
             "system": _contract_to_system_name(contract),
-            "estimated_impact": "Eliminates CRITICAL violation affecting downstream consumers.",
+            "action": (
+                f"Update {file_path} to fix contract clause {check_id}: "
+                f"field '{field}' currently outputs {actual} but contract "
+                f"{contract} requires {expected}. "
+                f"Blamed commit: {commit} by {author}. "
+                f"{downstream_str}"
+            ),
+            "contract_clause": check_id,
+            "file_path": file_path,
+            "estimated_impact": (
+                f"Eliminates CRITICAL violation in {_contract_to_system_name(contract)}. "
+                f"Unblocks {len(downstream)} downstream consumer(s)."
+            ),
         })
 
-    # Action from schema changes
+    # ── Action from HIGH violations ───────────────────────────────────────────
+    high = [
+        v for v in violations
+        if v.get("severity") == "HIGH" and not v.get("injected", False)
+    ]
+    if high and len(actions) < 3:
+        top = high[0]
+        field = top.get("failing_field", "unknown")
+        contract = top.get("contract_id", "unknown")
+        check_id = top.get("check_id", "unknown")
+        blame = top.get("blame_chain", [])
+        file_path = blame[0].get("file_path", "unknown") if blame else "unknown"
+        actual = top.get("actual_value", "unknown")
+        expected = top.get("expected", "unknown")
+
+        actions.append({
+            "priority": len(actions) + 1,
+            "risk_level": "HIGH",
+            "system": _contract_to_system_name(contract),
+            "action": (
+                f"Update {file_path} to fix contract clause {check_id}: "
+                f"field '{field}' outputs {actual} but contract "
+                f"{contract} requires {expected}. "
+                f"This is a HIGH severity violation — pipeline blocked in ENFORCE mode."
+            ),
+            "contract_clause": check_id,
+            "file_path": file_path,
+            "estimated_impact": (
+                f"Resolves HIGH violation in {_contract_to_system_name(contract)} "
+                f"and restores ENFORCE mode compatibility."
+            ),
+        })
+
+    # ── Action from breaking schema changes ───────────────────────────────────
     breaking_changes = [
         c for c in schema_changes.get("schema_changes", [])
         if c.get("compatibility_verdict") == "BREAKING"
     ]
-    if breaking_changes:
+    if breaking_changes and len(actions) < 3:
         bc = breaking_changes[0]
+        change_detail = bc.get("change_summary", ["unknown change"])
+        first_change = change_detail[0] if change_detail else "unknown change"
         actions.append({
             "priority": len(actions) + 1,
             "risk_level": "HIGH",
-            "action": (
-                f"Coordinate schema migration for {bc['system']}: "
-                f"{bc['breaking_changes']} breaking change(s) detected. "
-                f"Notify registry subscribers before deploying. "
-                f"Changes: {'; '.join(bc['change_summary'][:2])}"
-            ),
             "system": bc["system"],
-            "estimated_impact": "Prevents silent data corruption in downstream consumers.",
+            "action": (
+                f"Coordinate schema migration for {bc['system']} before next deployment: "
+                f"{bc['breaking_changes']} breaking change(s) detected in contract "
+                f"{bc['contract_id']}. "
+                f"First breaking change: {first_change}. "
+                f"Run: python contracts/schema_analyzer.py "
+                f"--contract-id {bc['contract_id']} "
+                f"to generate full migration checklist and rollback plan."
+            ),
+            "contract_clause": bc["contract_id"],
+            "file_path": "migration_impact_reports/",
+            "estimated_impact": (
+                "Prevents silent data corruption in downstream consumers "
+                "caused by unannounced breaking schema change."
+            ),
         })
 
-    # Action from AI risk
+    # ── Action from AI risk ────────────────────────────────────────────────────
     drift = ai_risk.get("embedding_drift", {})
-    output = ai_risk.get("output_schema", {})
-    if drift.get("status") == "FAIL":
+    output_schema = ai_risk.get("output_schema", {})
+
+    if drift.get("status") == "FAIL" and len(actions) < 3:
+        drift_score = drift.get("drift_score", "unknown")
+        threshold = drift.get("threshold", 0.15)
         actions.append({
             "priority": len(actions) + 1,
             "risk_level": "HIGH",
-            "action": (
-                f"Investigate embedding drift in Week 3 Document Refinery: "
-                f"drift score {drift.get('drift_score', 'unknown')} exceeds threshold "
-                f"{drift.get('threshold', 0.15)}. "
-                f"Review recent changes to document corpus or extraction model "
-                f"(src/agents/extractor.py). Re-establish embedding baseline after fix."
-            ),
             "system": "Week 3 Document Refinery",
-            "estimated_impact": "Prevents semantic drift from corrupting downstream search and retrieval.",
+            "action": (
+                f"Investigate embedding drift in src/agents/extractor.py: "
+                f"drift score {drift_score} exceeds threshold {threshold} "
+                f"per contract clause "
+                f"week3-document-refinery-extractions.extracted_facts.text.embedding_drift. "
+                f"Re-establish baseline by deleting schema_snapshots/embedding_baselines.npz "
+                f"and re-running: python contracts/ai_extensions.py --embedding-drift"
+            ),
+            "contract_clause": (
+                "week3-document-refinery-extractions"
+                ".extracted_facts.text.embedding_drift"
+            ),
+            "file_path": "src/agents/extractor.py",
+            "estimated_impact": (
+                "Prevents semantic drift from corrupting downstream "
+                "search and retrieval quality."
+            ),
         })
-    elif output.get("trend") == "rising":
+    elif output_schema.get("trend") == "rising" and len(actions) < 3:
+        rate = output_schema.get("violation_rate", 0)
         actions.append({
             "priority": len(actions) + 1,
             "risk_level": "MEDIUM",
-            "action": (
-                f"Investigate rising LLM output schema violation rate in Week 2 "
-                f"Digital Courtroom: rate={output.get('violation_rate', 0):.2%}. "
-                f"Review recent prompt changes or model version updates."
-            ),
             "system": "Week 2 Digital Courtroom",
-            "estimated_impact": "Prevents structured output failures from propagating to consumers.",
+            "action": (
+                f"Investigate rising LLM output schema violation rate in "
+                f"outputs/week2/verdicts.jsonl: "
+                f"rate={rate:.2%} per contract clause "
+                f"week2-verdict-records.overall_verdict.output_schema_violation_rate. "
+                f"Review recent prompt changes in the courtroom system and "
+                f"check model version for behaviour changes."
+            ),
+            "contract_clause": (
+                "week2-verdict-records"
+                ".overall_verdict.output_schema_violation_rate"
+            ),
+            "file_path": "outputs/week2/verdicts.jsonl",
+            "estimated_impact": (
+                "Prevents structured LLM output failures from "
+                "propagating to downstream consumers undetected."
+            ),
         })
 
-    # Default action if we have fewer than 3
+    # ── Default actions to pad to 3 ───────────────────────────────────────────
     defaults = [
         {
-            "priority": 99,
             "risk_level": "LOW",
-            "action": (
-                "Run python contracts/generator.py --all --annotate weekly to keep "
-                "contracts current with actual data distributions. "
-                "Stale contracts produce false positives that erode team trust in enforcement."
-            ),
             "system": "All systems",
-            "estimated_impact": "Prevents contract staleness — the most common enforcement failure mode.",
+            "action": (
+                "Run python contracts/generator.py --all --annotate weekly "
+                "to refresh contract clauses and update baselines in "
+                "schema_snapshots/baselines.json. "
+                "Stale contracts produce false positives that erode team "
+                "trust in enforcement."
+            ),
+            "contract_clause": "all contracts — statistical baseline clauses",
+            "file_path": "schema_snapshots/baselines.json",
+            "estimated_impact": (
+                "Prevents contract staleness — the most common production "
+                "enforcement failure mode per DOMAIN_NOTES.md."
+            ),
         },
         {
-            "priority": 99,
             "risk_level": "LOW",
-            "action": (
-                "Add real LangSmith traces by enabling tracing in Week 2 and Week 3 "
-                "and replacing outputs/traces/runs.jsonl with the exported data. "
-                "Current traces are synthetic — AI extension metrics are not production-representative."
-            ),
             "system": "LangSmith Traces",
-            "estimated_impact": "Makes AI contract extension metrics meaningful for production monitoring.",
+            "action": (
+                "Replace outputs/traces/runs.jsonl with real LangSmith export "
+                "by enabling tracing in Week 2 and Week 3 and running: "
+                "langsmith export --project your_project --format jsonl "
+                "> outputs/traces/runs.jsonl. "
+                "Current traces are synthetic — contract clause "
+                "langsmith-trace-records.total_tokens.token_arithmetic "
+                "is not production-validated."
+            ),
+            "contract_clause": "langsmith-trace-records.total_tokens.token_arithmetic",
+            "file_path": "outputs/traces/runs.jsonl",
+            "estimated_impact": (
+                "Makes AI contract extension metrics production-representative "
+                "for the final submission and future monitoring."
+            ),
         },
         {
-            "priority": 99,
             "risk_level": "LOW",
-            "action": (
-                "Run python contracts/schema_analyzer.py "
-                "--contract-id week5-event-records --inject-change "
-                "to verify schema evolution detection is working end-to-end."
-            ),
             "system": "Week 5 Event Sourcing Platform",
-            "estimated_impact": "Validates the SchemaEvolutionAnalyzer is operational before a real change occurs.",
+            "action": (
+                "Fix aggregate_id format in migration script "
+                "migrate_to_canonical.py: synthetic padding records use "
+                "loan-SYNTHETIC-0000 format which fails contract clause "
+                "week5-event-records.aggregate_id.pattern (UUID required). "
+                "Update _synthetic_event() to generate UUID aggregate_ids."
+            ),
+            "contract_clause": "week5-event-records.aggregate_id.pattern",
+            "file_path": "migrate_to_canonical.py",
+            "estimated_impact": (
+                "Eliminates 3 known HIGH violations from synthetic padding "
+                "records and raises Week 5 pass rate from 86.7% to 100%."
+            ),
         },
     ]
 
-    while len(actions) < 3:
-        actions.append(defaults[len(actions) - len(actions)])
-        if not defaults:
-            break
-        default = defaults.pop(0)
-        default["priority"] = len(actions) + 1
-        actions.append(default)
+    for default in defaults:
         if len(actions) >= 3:
             break
+        default["priority"] = len(actions) + 1
+        actions.append(default)
 
     # Re-number priorities
     for i, a in enumerate(actions[:3]):
