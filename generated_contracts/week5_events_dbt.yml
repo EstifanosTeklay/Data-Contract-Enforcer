@@ -19,6 +19,9 @@ models:
         - CreditAnalysisCompleted
         - FraudScreeningCompleted
         - ComplianceClearanceIssued
+        - DecisionGenerated
+        - HumanReviewCompleted
+        - ApplicationApproved
   - name: aggregate_id
     description: "ID of the aggregate root. Format: '{type}-{id}' e.g. loan-APEX-COMMERCIAL-001\
       \ or agent-{id}. NOT a UUID \u2014 stream-scoped identifier. [format: uuid]"
@@ -36,7 +39,9 @@ models:
         - AuditRecord
         - Domain
   - name: sequence_number
-    description: Monotonically increasing per aggregate_id. No gaps, no duplicates.
+    description: Sequential order number indicating the position or sequence of an
+      event within a series, starting from 1 and incrementing by 1 for each subsequent
+      event
     tests:
     - not_null
   - name: schema_version

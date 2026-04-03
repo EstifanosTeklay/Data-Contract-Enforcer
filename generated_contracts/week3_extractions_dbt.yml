@@ -1,7 +1,7 @@
 version: 2
 models:
 - name: week3_extractions
-  description: Week 3 Document Refinery — Extraction Records
+  description: "Week 3 Document Refinery \u2014 Extraction Records"
   columns:
   - name: doc_id
     description: 'Primary key. UUIDv4. Stable across re-extractions of the same source.
@@ -10,7 +10,7 @@ models:
     - not_null
     - unique
   - name: source_path
-    description: 'Column source_path — null fraction: 0.0%'
+    description: "Column source_path \u2014 null fraction: 0.0%"
     tests:
     - not_null
   - name: source_hash
@@ -18,15 +18,21 @@ models:
     tests:
     - not_null
   - name: extracted_facts
-    description: List of facts extracted from the document. Must be non-empty.
+    description: An array of fact objects extracted from source documents, where each
+      fact contains a unique identifier, confidence score, associated entity references,
+      page reference, source excerpt, and extracted text content from the document
     tests:
     - not_null
   - name: entities
-    description: List of entities referenced by extracted facts.
+    description: JSON array containing structured metadata about entities extracted
+      from documents, where each entity has a unique identifier, canonical value,
+      name, and classification type. All samples show references to 'MCF.pdf' files
+      classified as 'OTHER' type entities.
     tests:
     - not_null
   - name: extraction_model
-    description: Model identifier. Must match claude-* or gpt-*.
+    description: Identifier of the AI model used to extract information from the source
+      document, specifying the exact version of the extraction engine employed
     tests:
     - not_null
   - name: processing_time_ms
@@ -38,11 +44,11 @@ models:
     tests:
     - not_null
   - name: token_count.input
-    description: 'Column token_count.input — null fraction: 0.0%'
+    description: "Column token_count.input \u2014 null fraction: 0.0%"
     tests:
     - not_null
   - name: token_count.output
-    description: 'Column token_count.output — null fraction: 0.0%'
+    description: "Column token_count.output \u2014 null fraction: 0.0%"
     tests:
     - not_null
   tests:

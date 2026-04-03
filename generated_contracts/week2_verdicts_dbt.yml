@@ -1,28 +1,29 @@
 version: 2
 models:
-- name: week2
+- name: week2_verdicts
   description: "Week 2 Digital Courtroom \u2014 Verdict Records"
   columns:
   - name: verdict_id
+    description: "Column verdict_id \u2014 null fraction: 0.0% [format: uuid]"
     tests:
     - not_null
     - unique
-    description: "Column verdict_id \u2014 null fraction: 0.0%"
   - name: target_ref
+    description: File path reference pointing to the source code module or file being
+      evaluated, typically a Python module path in the codebase
     tests:
     - not_null
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
   - name: rubric_id
+    description: "Column rubric_id \u2014 null fraction: 0.0% [format: uuid]"
     tests:
     - not_null
-    description: "Column rubric_id \u2014 null fraction: 0.0%"
   - name: rubric_version
+    description: "Column rubric_version \u2014 null fraction: 0.0%"
     tests:
     - not_null
-    description: "Column rubric_version \u2014 null fraction: 0.0%"
   - name: overall_verdict
+    description: Final pass/fail determination for an evaluation based on rubric criteria
+      and scoring thresholds
     tests:
     - not_null
     - accepted_values:
@@ -30,34 +31,44 @@ models:
         - PASS
         - FAIL
         - WARN
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
   - name: overall_score
-    tests:
-    - not_null
     description: "Column overall_score \u2014 null fraction: 0.0%"
+    tests:
+    - not_null
   - name: confidence
-    tests:
-    - not_null
     description: Confidence in verdict. Float 0.0-1.0.
+    tests:
+    - not_null
   - name: evaluated_at
+    description: "Column evaluated_at \u2014 null fraction: 0.0% [format: date-time]"
     tests:
     - not_null
-    description: "Column evaluated_at \u2014 null fraction: 0.0%"
   - name: scores.code_quality
-    tests:
-    - not_null
     description: "Column scores.code_quality \u2014 null fraction: 0.0%"
+    tests:
+    - not_null
   - name: scores.test_coverage
-    tests:
-    - not_null
     description: "Column scores.test_coverage \u2014 null fraction: 0.0%"
+    tests:
+    - not_null
   - name: scores.documentation
-    tests:
-    - not_null
     description: "Column scores.documentation \u2014 null fraction: 0.0%"
-  - name: scores.security
     tests:
     - not_null
+  - name: scores.security
     description: "Column scores.security \u2014 null fraction: 0.0%"
+    tests:
+    - not_null
+  tests:
+  - dbt_utils.expression_is_true:
+      expression: overall_score >= 1.0 and overall_score <= 5.0
+      name: overall_score_range_1.0_to_5.0
+  - dbt_utils.expression_is_true:
+      expression: confidence >= 0.0 and confidence <= 1.0
+      name: confidence_range_0.0_to_1.0
+  - dbt_utils.expression_is_true:
+      expression: overall_score between 1.0 and 5.0
+      name: overall_score_valid_range
+  - dbt_utils.expression_is_true:
+      expression: confidence between 0.0 and 1.0
+      name: confidence_valid_range

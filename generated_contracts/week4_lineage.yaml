@@ -5,7 +5,7 @@ info:
   title: Week 4 Brownfield Cartographer — Lineage Snapshots
   version: 1.0.0
   owner: week4-team
-  description: Auto-generated contract for week4 outputs. Generated at 2026-04-01T18:50:47.507880Z
+  description: Auto-generated contract for week4 outputs. Generated at 2026-04-03T16:31:07.934705Z
     from 1 records.
 servers:
   local:
@@ -19,52 +19,52 @@ terms:
 schema:
   snapshot_id:
     type: string
-    required: &id001 !!python/object/apply:numpy._core.multiarray.scalar
-    - !!python/object/apply:numpy.dtype
-      args:
-      - b1
-      - false
-      - true
-      state: !!python/tuple
-      - 3
-      - '|'
-      - null
-      - null
-      - null
-      - -1
-      - -1
-      - 0
-    - !!binary |
-      AQ==
+    required: true
     description: 'Column snapshot_id — null fraction: 0.0%'
     format: uuid
     unique: true
   codebase_root:
     type: string
-    required: *id001
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
+    required: true
+    description: The root directory path of the codebase on the local file system
+      where the project is located
+    x_business_rule: value is not null and length(value) > 0 and (value like '%:\\%'
+      or value like '/%')
+    x_cross_column_relationship: Represents the source location for the snapshot_id
+      and git_commit data; the nodes and edges are derived from analyzing code at
+      this codebase_root path
   git_commit:
     type: string
-    required: *id001
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
+    required: true
+    description: A unique SHA-1 hash identifier representing a specific commit in
+      a Git version control system, used to track the exact version of the codebase
+      at the time of the snapshot
     pattern: ^[a-f0-9]{40}$
+    x_business_rule: value matches '^[a-f0-9]{40}$' and value is not null
+    x_cross_column_relationship: Links to the specific version of the codebase identified
+      by codebase_root at the time indicated by captured_at; represents the state
+      of code when nodes and edges were measured in this snapshot_id
   nodes:
     type: string
-    required: *id001
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
+    required: true
+    description: Array of node objects representing files and components in the codebase,
+      each containing a label, metadata (language, last_modified timestamp, path,
+      purpose), node_id with file path prefix, and type classification (SERVICE, FILE,
+      PIPELINE, MODEL, TABLE)
+    x_business_rule: 'Must be valid JSON array; each node must contain ''label'',
+      ''metadata'', ''node_id'', and ''type'' fields; node_id must follow pattern
+      ''file::{path}''; type must be one of: SERVICE, FILE, PIPELINE, MODEL, TABLE'
+    x_cross_column_relationship: Nodes are connected via 'edges' column which defines
+      relationships between node_ids; nodes represent the codebase structure rooted
+      at 'codebase_root' path; snapshot is versioned by 'git_commit' and timestamped
+      at 'captured_at'
   edges:
     type: string
-    required: *id001
+    required: true
     description: 'Column edges — null fraction: 0.0%'
   captured_at:
     type: string
-    required: *id001
+    required: true
     description: 'Column captured_at — null fraction: 0.0%'
     format: date-time
 quality:
@@ -87,3 +87,32 @@ lineage:
     - edges.source
     - edges.target
     - nodes.node_id
+llm_annotations:
+  codebase_root:
+    description: The root directory path of the codebase on the local file system
+      where the project is located
+    business_rule: value is not null and length(value) > 0 and (value like '%:\\%'
+      or value like '/%')
+    cross_column_relationship: Represents the source location for the snapshot_id
+      and git_commit data; the nodes and edges are derived from analyzing code at
+      this codebase_root path
+  git_commit:
+    description: A unique SHA-1 hash identifier representing a specific commit in
+      a Git version control system, used to track the exact version of the codebase
+      at the time of the snapshot
+    business_rule: value matches '^[a-f0-9]{40}$' and value is not null
+    cross_column_relationship: Links to the specific version of the codebase identified
+      by codebase_root at the time indicated by captured_at; represents the state
+      of code when nodes and edges were measured in this snapshot_id
+  nodes:
+    description: Array of node objects representing files and components in the codebase,
+      each containing a label, metadata (language, last_modified timestamp, path,
+      purpose), node_id with file path prefix, and type classification (SERVICE, FILE,
+      PIPELINE, MODEL, TABLE)
+    business_rule: 'Must be valid JSON array; each node must contain ''label'', ''metadata'',
+      ''node_id'', and ''type'' fields; node_id must follow pattern ''file::{path}'';
+      type must be one of: SERVICE, FILE, PIPELINE, MODEL, TABLE'
+    cross_column_relationship: Nodes are connected via 'edges' column which defines
+      relationships between node_ids; nodes represent the codebase structure rooted
+      at 'codebase_root' path; snapshot is versioned by 'git_commit' and timestamped
+      at 'captured_at'

@@ -1,23 +1,38 @@
 version: 2
 models:
-- name: week1
+- name: week1_intent_records
   description: "Week 1 Intent-Code Correlator \u2014 Intent Records"
   columns:
   - name: intent_id
+    description: "Column intent_id \u2014 null fraction: 0.0% [format: uuid]"
     tests:
     - not_null
-    description: "Column intent_id \u2014 null fraction: 0.0%"
+    - accepted_values:
+        values:
+        - fdc9b348-a030-4431-94da-b433cb82f962
+        - 73aeaa9a-da32-4769-b2e0-02dd9f44238d
+        - 5aeed10b-936c-4727-9926-1660e3af931e
+        - fea9f09b-5c16-4f18-834f-c3a53c9c73f2
+        - 9f172523-2efc-4e30-b7a7-144c56487330
+        - 0097c57c-0fd1-4ce1-bd83-1b55f15ce4e8
+        - 896e5488-edd7-49ea-85da-8e658a9796cb
+        - 15df0f79-1b6f-4367-be29-21281e3ab139
+        - 5f301c8a-0809-4fde-b4ab-a4d32ce5709b
+        - 53f0c459-6b0b-4894-8e91-e573d52b3a0a
   - name: description
+    description: A human-readable text description of the intent or change, typically
+      containing the intent identifier, the operation type, and the mutation or action
+      being performed
     tests:
     - not_null
     - accepted_values:
         values:
         - 'Intent INT-001: write_to_file operation via AST_REFACTOR mutation'
         - 'Synthetic padding: configuration update for module init'
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
   - name: code_refs
+    description: JSON array containing code reference objects with metadata about
+      source code locations, including file paths, line number ranges, function/symbol
+      names, and confidence scores for linking code to business intent or requirements
     tests:
     - not_null
     - accepted_values:
@@ -26,16 +41,25 @@ models:
           1, "symbol": "write_to_file"}]'
         - '[{"confidence": 0.75, "file": "src/config.py", "line_end": 20, "line_start":
           1, "symbol": "load_config"}]'
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
   - name: governance_tags
+    description: A JSON array of governance-related tags or labels associated with
+      the record, used for categorizing and filtering data based on compliance, audit,
+      or data management requirements
     tests:
     - not_null
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
   - name: created_at
+    description: "Column created_at \u2014 null fraction: 0.0% [format: date-time]"
     tests:
     - not_null
-    description: "Column created_at \u2014 null fraction: 0.0%"
+    - accepted_values:
+        values:
+        - '2026-02-20T22:37:15.635Z'
+        - '2026-02-20T22:37:16.770Z'
+        - '2026-02-20T22:38:34.984Z'
+        - '2026-02-20T22:38:35.202Z'
+        - '2026-04-01T19:46:06.373432Z'
+        - '2026-04-01T19:46:06.373437Z'
+        - '2026-04-01T19:46:06.373441Z'
+        - '2026-04-01T19:46:06.373445Z'
+        - '2026-04-01T19:46:06.373448Z'
+        - '2026-04-01T19:46:06.373452Z'

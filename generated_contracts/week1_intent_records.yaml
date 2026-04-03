@@ -5,7 +5,7 @@ info:
   title: Week 1 Intent-Code Correlator — Intent Records
   version: 1.0.0
   owner: week1-team
-  description: Auto-generated contract for week1 outputs. Generated at 2026-04-01T18:50:41.436152Z
+  description: Auto-generated contract for week1 outputs. Generated at 2026-04-03T16:30:08.772601Z
     from 10 records.
 servers:
   local:
@@ -19,55 +19,76 @@ terms:
 schema:
   intent_id:
     type: string
-    required: &id001 !!python/object/apply:numpy._core.multiarray.scalar
-    - !!python/object/apply:numpy.dtype
-      args:
-      - b1
-      - false
-      - true
-      state: !!python/tuple
-      - 3
-      - '|'
-      - null
-      - null
-      - null
-      - -1
-      - -1
-      - 0
-    - !!binary |
-      AQ==
+    required: true
     description: 'Column intent_id — null fraction: 0.0%'
+    enum:
+    - fdc9b348-a030-4431-94da-b433cb82f962
+    - 73aeaa9a-da32-4769-b2e0-02dd9f44238d
+    - 5aeed10b-936c-4727-9926-1660e3af931e
+    - fea9f09b-5c16-4f18-834f-c3a53c9c73f2
+    - 9f172523-2efc-4e30-b7a7-144c56487330
+    - 0097c57c-0fd1-4ce1-bd83-1b55f15ce4e8
+    - 896e5488-edd7-49ea-85da-8e658a9796cb
+    - 15df0f79-1b6f-4367-be29-21281e3ab139
+    - 5f301c8a-0809-4fde-b4ab-a4d32ce5709b
+    - 53f0c459-6b0b-4894-8e91-e573d52b3a0a
     format: uuid
   description:
     type: string
-    required: *id001
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
+    required: true
+    description: A human-readable text description of the intent or change, typically
+      containing the intent identifier, the operation type, and the mutation or action
+      being performed
     enum:
     - 'Intent INT-001: write_to_file operation via AST_REFACTOR mutation'
     - 'Synthetic padding: configuration update for module init'
+    x_business_rule: length(description) > 0 AND description IS NOT NULL AND (description
+      LIKE 'Intent INT-%' OR description LIKE 'Synthetic padding:%')
+    x_cross_column_relationship: The intent identifier mentioned in the description
+      (e.g., 'INT-001') should match the value in the intent_id column. The description
+      provides context for the code_refs and may influence governance_tags classification.
   code_refs:
     type: string
-    required: *id001
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
+    required: true
+    description: JSON array containing code reference objects with metadata about
+      source code locations, including file paths, line number ranges, function/symbol
+      names, and confidence scores for linking code to business intent or requirements
     enum:
     - '[{"confidence": 0.87, "file": "src/config.py", "line_end": 50, "line_start":
       1, "symbol": "write_to_file"}]'
     - '[{"confidence": 0.75, "file": "src/config.py", "line_end": 20, "line_start":
       1, "symbol": "load_config"}]'
+    x_business_rule: must be valid JSON array; each object must contain 'confidence'
+      (float between 0 and 1), 'file' (non-empty string), 'line_end' (positive integer
+      >= line_start), 'line_start' (positive integer), and 'symbol' (non-empty string)
+    x_cross_column_relationship: references code implementation details for the business
+      intent specified in 'intent_id' and elaborated in 'description'; may be tagged
+      with relevant labels from 'governance_tags' for compliance tracking
   governance_tags:
     type: string
-    required: *id001
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
+    required: true
+    description: A JSON array of governance-related tags or labels associated with
+      the record, used for categorizing and filtering data based on compliance, audit,
+      or data management requirements
+    x_business_rule: value IS NULL OR (JSON_VALID(value) AND JSON_TYPE(value) = 'array')
+    x_cross_column_relationship: Provides governance metadata that may influence how
+      the intent_id record is handled, audited, or monitored; tags may be applied
+      based on the content of the description or code_refs columns
   created_at:
     type: string
-    required: *id001
+    required: true
     description: 'Column created_at — null fraction: 0.0%'
+    enum:
+    - '2026-02-20T22:37:15.635Z'
+    - '2026-02-20T22:37:16.770Z'
+    - '2026-02-20T22:38:34.984Z'
+    - '2026-02-20T22:38:35.202Z'
+    - '2026-04-01T19:46:06.373432Z'
+    - '2026-04-01T19:46:06.373437Z'
+    - '2026-04-01T19:46:06.373441Z'
+    - '2026-04-01T19:46:06.373445Z'
+    - '2026-04-01T19:46:06.373448Z'
+    - '2026-04-01T19:46:06.373452Z'
     format: date-time
 quality:
   type: SodaChecks
@@ -79,3 +100,31 @@ quality:
 lineage:
   upstream: []
   downstream: []
+llm_annotations:
+  description:
+    description: A human-readable text description of the intent or change, typically
+      containing the intent identifier, the operation type, and the mutation or action
+      being performed
+    business_rule: length(description) > 0 AND description IS NOT NULL AND (description
+      LIKE 'Intent INT-%' OR description LIKE 'Synthetic padding:%')
+    cross_column_relationship: The intent identifier mentioned in the description
+      (e.g., 'INT-001') should match the value in the intent_id column. The description
+      provides context for the code_refs and may influence governance_tags classification.
+  code_refs:
+    description: JSON array containing code reference objects with metadata about
+      source code locations, including file paths, line number ranges, function/symbol
+      names, and confidence scores for linking code to business intent or requirements
+    business_rule: must be valid JSON array; each object must contain 'confidence'
+      (float between 0 and 1), 'file' (non-empty string), 'line_end' (positive integer
+      >= line_start), 'line_start' (positive integer), and 'symbol' (non-empty string)
+    cross_column_relationship: references code implementation details for the business
+      intent specified in 'intent_id' and elaborated in 'description'; may be tagged
+      with relevant labels from 'governance_tags' for compliance tracking
+  governance_tags:
+    description: A JSON array of governance-related tags or labels associated with
+      the record, used for categorizing and filtering data based on compliance, audit,
+      or data management requirements
+    business_rule: value IS NULL OR (JSON_VALID(value) AND JSON_TYPE(value) = 'array')
+    cross_column_relationship: Provides governance metadata that may influence how
+      the intent_id record is handled, audited, or monitored; tags may be applied
+      based on the content of the description or code_refs columns

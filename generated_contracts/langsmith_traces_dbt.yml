@@ -4,84 +4,186 @@ models:
   description: "LangSmith Trace Records \u2014 AI Pipeline Observability"
   columns:
   - name: id
+    description: "Column id \u2014 null fraction: 0.0% [format: uuid]"
     tests:
     - not_null
     - unique
-    description: "Column id \u2014 null fraction: 0.0%"
   - name: name
+    description: The name or identifier of the execution trace, representing a specific
+      chain or process being tracked. Examples include document extraction and judicial
+      verdict processing chains.
     tests:
     - not_null
     - accepted_values:
         values:
         - document-extraction-chain
         - judicial-verdict-chain
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
   - name: run_type
+    description: "Column run_type \u2014 null fraction: 0.0%"
     tests:
     - not_null
     - accepted_values:
         values:
         - chain
         - llm
-    description: "Column run_type \u2014 null fraction: 0.0%"
   - name: error
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
+    description: Stores error information or exception details that occurred during
+      the execution of a trace, typically null when the trace completed successfully
   - name: start_time
+    description: "Column start_time \u2014 null fraction: 0.0% [format: date-time]"
     tests:
     - not_null
-    description: "Column start_time \u2014 null fraction: 0.0%"
   - name: end_time
+    description: 'Must be > start_time. [format: date-time]'
     tests:
     - not_null
-    description: Must be > start_time.
   - name: total_tokens
-    tests:
-    - not_null
     description: "Column total_tokens \u2014 null fraction: 0.0%"
+    tests:
+    - not_null
   - name: prompt_tokens
-    tests:
-    - not_null
     description: "Column prompt_tokens \u2014 null fraction: 0.0%"
+    tests:
+    - not_null
   - name: completion_tokens
-    tests:
-    - not_null
     description: total_tokens = prompt_tokens + completion_tokens
-  - name: total_cost
     tests:
     - not_null
-    description: 'Auto-annotation unavailable: "Could not resolve authentication method.
-      Expected either api_key or auth_token to be set. Or for one of the `X-Api-Key`
-      or `Authorization` headers to be explicitly omitted"'
+  - name: total_cost
+    description: The total monetary cost associated with executing a trace, measured
+      in dollars with precision to six decimal places
+    tests:
+    - not_null
   - name: tags
+    description: "Column tags \u2014 null fraction: 0.0%"
     tests:
     - not_null
     - accepted_values:
         values:
         - '["week3", "extraction"]'
         - '["week2", "verdict", "judicial"]'
-    description: "Column tags \u2014 null fraction: 0.0%"
   - name: parent_run_id
-    description: "Column parent_run_id \u2014 null fraction: 44.0%"
+    description: "Column parent_run_id \u2014 null fraction: 44.0% [format: uuid]"
+    tests:
+    - accepted_values:
+        values:
+        - 43b01f74-de17-41b7-8b84-73f0c86bebd0
+        - 9d4c46ac-4bd8-4784-9d06-f0181477c522
+        - fd7931c6-3810-49c0-a1b2-fc62bf5f8e5a
+        - f0da38c1-c9f4-403f-8797-33fd6a723f69
+        - 6c76f0da-08db-4a1b-80f4-493da2421c7d
+        - 02fd2dfd-562b-4413-9d67-a8350542ac5c
+        - ad16ee32-af3f-43e8-83a0-75e57e9c9e23
+        - e9523e97-5ba2-4f0c-b814-6abeca6d1099
+        - 5bcc92fd-34da-4c0d-b0b0-a6939f31ebd1
+        - 761e755d-3ebf-48fd-b9cb-a8f65cfa6a73
+        - afdeef11-42a3-45c0-83a2-150d5079981b
+        - 814a9ad8-599d-40e8-b83b-cb552a81dc32
+        - 3144e4c7-d970-4657-bbc1-6557874bcbf2
+        - 43ce7174-0ec8-4f97-9dab-baf71f121445
   - name: session_id
+    description: "Column session_id \u2014 null fraction: 0.0% [format: uuid]"
     tests:
     - not_null
     - accepted_values:
         values:
-        - a20a456e-8707-4936-8af6-4248eb0aa803
-        - 3781bdef-adb2-40ba-ac72-3d1cbd9289ff
-    description: "Column session_id \u2014 null fraction: 0.0%"
+        - 3dd3bfb1-def6-406d-a327-8ca956c2938f
+        - 9c7550f8-3400-4d6f-93fe-d36102a32bba
   - name: inputs.doc_id
-    description: "Column inputs.doc_id \u2014 null fraction: 40.0%"
+    description: "Column inputs.doc_id \u2014 null fraction: 40.0% [format: uuid]"
+    tests:
+    - accepted_values:
+        values:
+        - fc023540-35cb-4b8e-a648-56e305e1cfc6
+        - 9c46a07a-b4d0-42b0-9d64-a7c193108bd7
+        - efe99c0c-8a58-4199-a32b-a37f0a65851c
+        - c46e31df-0933-4125-8f2d-4031dfc989a1
+        - 5faabdc3-b691-44eb-9c85-73db72d9dc53
+        - d3c85fc7-55a6-43e6-a35f-728afb15003d
+        - c1cfb571-c607-4f22-9f41-f4a0d2baf8d9
+        - 21e3a721-a66d-4100-bf97-fcdda0915872
+        - ffa08b17-0155-412d-8562-344b008d8cd1
+        - 82acdbfb-a792-45d4-89e7-1b4cb686b94b
+        - 6dde8c10-934a-42e8-9fb1-e49b8497197e
+        - c504f223-9d39-4446-9acf-31ec61083190
+        - 0dc10a8d-b1bb-47de-a7fe-b05b0f3cd9f7
+        - e2910777-481e-41c6-877a-43975573d396
+        - ff30614f-9747-4e28-8041-7a5c1ed4f58c
   - name: inputs.content_preview
     description: "Column inputs.content_preview \u2014 null fraction: 40.0%"
+    tests:
+    - accepted_values:
+        values:
+        - Document content preview 0...
+        - Document content preview 1...
+        - Document content preview 2...
+        - Document content preview 3...
+        - Document content preview 4...
+        - Document content preview 5...
+        - Document content preview 6...
+        - Document content preview 7...
+        - Document content preview 8...
+        - Document content preview 9...
+        - Document content preview 10...
+        - Document content preview 11...
+        - Document content preview 12...
+        - Document content preview 13...
+        - Document content preview 14...
   - name: inputs.source_path
     description: "Column inputs.source_path \u2014 null fraction: 40.0%"
+    tests:
+    - accepted_values:
+        values:
+        - documents/doc_0000.pdf
+        - documents/doc_0001.pdf
+        - documents/doc_0002.pdf
+        - documents/doc_0003.pdf
+        - documents/doc_0004.pdf
+        - documents/doc_0005.pdf
+        - documents/doc_0006.pdf
+        - documents/doc_0007.pdf
+        - documents/doc_0008.pdf
+        - documents/doc_0009.pdf
+        - documents/doc_0010.pdf
+        - documents/doc_0011.pdf
+        - documents/doc_0012.pdf
+        - documents/doc_0013.pdf
+        - documents/doc_0014.pdf
   - name: outputs.extracted_facts
     description: "Column outputs.extracted_facts \u2014 null fraction: 40.0%"
+    tests:
+    - accepted_values:
+        values:
+        - '[{"confidence": 0.8572, "fact_id": "dfe7cc06-6f94-45f9-a2fe-a3b14690484e",
+          "text": "Extracted fact from document 0"}]'
+        - '[{"confidence": 0.7625, "fact_id": "10a8ac6c-ea4b-4f5e-9eb6-4bb58fdbe8f9",
+          "text": "Extracted fact from document 1"}]'
+        - '[{"confidence": 0.7319, "fact_id": "cbfe9542-2faf-416b-9e51-bae086ad5f48",
+          "text": "Extracted fact from document 2"}]'
+        - '[{"confidence": 0.8936, "fact_id": "e77b7a66-488e-4ddd-8328-1677274f5a79",
+          "text": "Extracted fact from document 3"}]'
+        - '[{"confidence": 0.7166, "fact_id": "422b78ea-e92a-498a-bce8-83fddd945fd8",
+          "text": "Extracted fact from document 4"}]'
+        - '[{"confidence": 0.8785, "fact_id": "c2ec5aaf-18aa-43b6-9e0f-493fcfe65354",
+          "text": "Extracted fact from document 5"}]'
+        - '[{"confidence": 0.9712, "fact_id": "8d615a13-9248-434c-887f-cefe81d2001a",
+          "text": "Extracted fact from document 6"}]'
+        - '[{"confidence": 0.7924, "fact_id": "256eedee-5edf-4b6f-9a4d-d19d5c814511",
+          "text": "Extracted fact from document 7"}]'
+        - '[{"confidence": 0.8554, "fact_id": "88f7ca30-6bd8-4f84-aded-9ff3b0b2d6f2",
+          "text": "Extracted fact from document 8"}]'
+        - '[{"confidence": 0.7465, "fact_id": "9db9dbf8-b3b7-447e-9cdd-6ed37a26cef3",
+          "text": "Extracted fact from document 9"}]'
+        - '[{"confidence": 0.8841, "fact_id": "05b1a6b6-cea0-475f-8190-9da7c54552db",
+          "text": "Extracted fact from document 10"}]'
+        - '[{"confidence": 0.785, "fact_id": "ddcf15e9-2af2-4b59-bff7-9eafe947dd83",
+          "text": "Extracted fact from document 11"}]'
+        - '[{"confidence": 0.7289, "fact_id": "91a2b1e1-46d0-434a-b5f3-e6261b112d9b",
+          "text": "Extracted fact from document 12"}]'
+        - '[{"confidence": 0.8257, "fact_id": "91156098-e338-4648-ba13-cdf383d73189",
+          "text": "Extracted fact from document 13"}]'
+        - '[{"confidence": 0.8004, "fact_id": "74bbd4c9-23fd-4bd6-b52f-7b5fc37dc551",
+          "text": "Extracted fact from document 14"}]'
   - name: inputs.target_ref
     description: "Column inputs.target_ref \u2014 null fraction: 60.0%"
   - name: inputs.rubric_version
@@ -92,3 +194,28 @@ models:
     description: "Column outputs.overall_score \u2014 null fraction: 60.0%"
   - name: outputs.confidence
     description: "Column outputs.confidence \u2014 null fraction: 60.0%"
+  tests:
+  - dbt_utils.expression_is_true:
+      expression: total_tokens >= 0 and total_tokens <= 12898.0
+      name: total_tokens_range_0_to_12898.0
+  - dbt_utils.expression_is_true:
+      expression: prompt_tokens >= 0 and prompt_tokens <= 11924.0
+      name: prompt_tokens_range_0_to_11924.0
+  - dbt_utils.expression_is_true:
+      expression: completion_tokens >= 0 and completion_tokens <= 1953.0
+      name: completion_tokens_range_0_to_1953.0
+  - dbt_utils.expression_is_true:
+      expression: total_cost >= 0.0 and total_cost <= 0.054351
+      name: total_cost_range_0.0_to_0.054351
+  - dbt_utils.expression_is_true:
+      expression: outputs.overall_score >= 3.11 and outputs.overall_score <= 4.58
+      name: outputs.overall_score_range_3.11_to_4.58
+  - dbt_utils.expression_is_true:
+      expression: outputs.confidence >= 0.68 and outputs.confidence <= 0.94
+      name: outputs.confidence_range_0.68_to_0.94
+  - dbt_utils.expression_is_true:
+      expression: end_time > start_time
+      name: end_time_after_start_time
+  - dbt_utils.expression_is_true:
+      expression: total_cost >= 0
+      name: total_cost_non_negative
