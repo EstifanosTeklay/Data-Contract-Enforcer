@@ -1,0 +1,126 @@
+{
+  "report_id": "c76f9980-9f9b-4204-a1d1-b079d900fb3f",
+  "report_type": "migration_impact",
+  "contract_id": "week3-document-refinery-extractions",
+  "generated_at": "2026-04-03T17:41:11.813420Z",
+  "snapshot_a": "schema_snapshots\\week3-document-refinery-extractions\\20260403_174032_injected.yaml",
+  "snapshot_b": "schema_snapshots/week3-document-refinery-extractions/20260403_174111_injected.yaml",
+  "total_changes": 1,
+  "breaking_changes": 1,
+  "compatible_changes": 0,
+  "compatibility_verdict": "BREAKING",
+  "human_readable_diff": "[\u2717 BREAKING] NARROW_TYPE \u2014 field: extracted_at.type\n  before: string\n  after:  integer\n  action: CRITICAL. Requires migration plan with rollback. Registry blast radius report mandatory. Statistical baseline must be re-established after migration. Example: float 0.0-1.0 -> int 0-100 is a CRITICAL narrowing change.\n",
+  "changes": [
+    {
+      "change_type": "NARROW_TYPE",
+      "field": "extracted_at",
+      "property": "type",
+      "old_value": "string",
+      "new_value": "integer"
+    }
+  ],
+  "lineage_blast_radius": {
+    "lineage_available": true,
+    "start_nodes": [],
+    "downstream_nodes": [],
+    "upstream_nodes": [],
+    "summary": {
+      "start_node_count": 0,
+      "downstream_node_count": 0,
+      "upstream_node_count": 0,
+      "max_downstream_depth": 0,
+      "max_upstream_depth": 0
+    }
+  },
+  "consumer_impact": [
+    {
+      "subscriber_id": "week4-cartographer",
+      "subscriber_team": "week4",
+      "validation_mode": "ENFORCE",
+      "contact": "week4-team@org.com",
+      "fields_consumed": [
+        "doc_id",
+        "extracted_facts",
+        "extraction_model",
+        "entities"
+      ],
+      "affected_fields": [],
+      "failure_mode": "Unaffected",
+      "impact_severity": "LOW",
+      "impact_reasons": []
+    },
+    {
+      "subscriber_id": "week7-ai-contract-extensions",
+      "subscriber_team": "week7",
+      "validation_mode": "AUDIT",
+      "contact": "week7-team@org.com",
+      "fields_consumed": [
+        "extracted_facts",
+        "doc_id"
+      ],
+      "affected_fields": [],
+      "failure_mode": "Unaffected",
+      "impact_severity": "LOW",
+      "impact_reasons": []
+    }
+  ],
+  "migration_checklist": [
+    {
+      "step": 1,
+      "action": "CRITICAL. Requires migration plan with rollback. Registry blast radius report mandatory. Statistical baseline must be re-established after migration. Example: float 0.0-1.0 -> int 0-100 is a CRITICAL narrowing change.",
+      "field": "extracted_at",
+      "change_type": "NARROW_TYPE",
+      "responsible": "producer-team"
+    },
+    {
+      "step": 2,
+      "action": "Notify week4-cartographer (week4-team@org.com) of breaking changes. Confirm fields_consumed: ['doc_id', 'extracted_facts', 'extraction_model', 'entities'].",
+      "field": "all",
+      "change_type": "NOTIFICATION",
+      "responsible": "week4"
+    },
+    {
+      "step": 3,
+      "action": "Notify week7-ai-contract-extensions (week7-team@org.com) of breaking changes. Confirm fields_consumed: ['extracted_facts', 'doc_id'].",
+      "field": "all",
+      "change_type": "NOTIFICATION",
+      "responsible": "week7"
+    },
+    {
+      "step": 4,
+      "action": "Re-run ContractGenerator to update schema snapshots after migration.",
+      "field": "all",
+      "change_type": "VALIDATION",
+      "responsible": "week7-team"
+    },
+    {
+      "step": 5,
+      "action": "Re-run ValidationRunner on all affected contracts to confirm 0 FAIL results.",
+      "field": "all",
+      "change_type": "VALIDATION",
+      "responsible": "week7-team"
+    }
+  ],
+  "rollback_plan": {
+    "rollback_to_snapshot": "schema_snapshots\\week3-document-refinery-extractions\\20260403_174032_injected.yaml",
+    "steps": [
+      {
+        "step": 1,
+        "action": "Revert producer code changes that caused: ['extracted_at']"
+      },
+      {
+        "step": 2,
+        "action": "Re-deploy producer from last known good commit. Reference snapshot: schema_snapshots\\week3-document-refinery-extractions\\20260403_174032_injected.yaml"
+      },
+      {
+        "step": 3,
+        "action": "Re-run ValidationRunner to confirm all checks PASS."
+      },
+      {
+        "step": 4,
+        "action": "Re-establish statistical baselines in schema_snapshots/baselines.json if the rollback changes numeric distributions."
+      }
+    ],
+    "estimated_recovery_time": "1-2 hours for code rollback + 30 min validation"
+  }
+}
