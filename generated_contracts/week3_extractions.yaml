@@ -2,10 +2,10 @@ kind: DataContract
 apiVersion: v3.0.0
 id: week3-document-refinery-extractions
 info:
-  title: Week 3 Document Refinery — Extraction Records
+  title: Week 3 Document Refinery â€” Extraction Records
   version: 1.0.0
   owner: week3-team
-  description: Auto-generated contract for week3 outputs. Generated at 2026-04-03T16:30:44.112756Z
+  description: Auto-generated contract for week3 outputs. Generated at 2026-04-04T20:45:26.022144Z
     from 50 records.
 servers:
   local:
@@ -26,7 +26,7 @@ schema:
   source_path:
     type: string
     required: true
-    description: 'Column source_path — null fraction: 0.0%'
+    description: 'Column source_path â€” null fraction: 0.0%'
   source_hash:
     type: string
     required: true
@@ -35,42 +35,16 @@ schema:
   extracted_facts:
     type: array
     required: true
-    description: An array of fact objects extracted from source documents, where each
-      fact contains a unique identifier, confidence score, associated entity references,
-      page reference, source excerpt, and extracted text content from the document
-    x_business_rule: 'Must be a valid JSON array; each fact object must contain required
-      fields: fact_id (UUID), confidence (float 0-1), entity_refs (array of UUIDs),
-      page_ref (integer >= 1), source_excerpt (string), and text (string); all facts
-      in array should reference the same source document'
-    x_cross_column_relationship: Entity UUIDs in entity_refs field must correspond
-      to entities in the 'entities' column; facts are extracted from the document
-      identified by 'doc_id' and 'source_path'; extraction_model determines the algorithm
-      used to generate these facts
+    description: List of facts extracted from the document. Must be non-empty.
   entities:
     type: array
     required: true
-    description: JSON array containing structured metadata about entities extracted
-      from documents, where each entity has a unique identifier, canonical value,
-      name, and classification type. All samples show references to 'MCF.pdf' files
-      classified as 'OTHER' type entities.
-    x_business_rule: 'value must be valid JSON array format AND each entity object
-      must contain fields: entity_id (UUID format), canonical_value (string), name
-      (string), and type (string enum)'
-    x_cross_column_relationship: Related to doc_id as the parent document identifier;
-      entities are likely extracted from the file specified in source_path; the extracted_facts
-      column may reference or correlate with these entity_ids; extraction_model indicates
-      the AI/ML model used to identify these entities
+    description: List of entities referenced by extracted facts.
   extraction_model:
     type: string
     required: true
-    description: Identifier of the AI model used to extract information from the source
-      document, specifying the exact version of the extraction engine employed
+    description: Model identifier. Must match claude-* or gpt-*.
     pattern: ^(claude|gpt)-
-    x_business_rule: value is not null and length(value) > 0 and value matches pattern
-      '^[a-z0-9\-\.]+$'
-    x_cross_column_relationship: Links to extracted_facts and entities columns as
-      the model that generated those extraction results; associated with source_path
-      and source_hash to track which model version processed each source document
   processing_time_ms:
     type: integer
     required: true
@@ -85,15 +59,22 @@ schema:
   token_count.input:
     type: integer
     required: true
-    description: 'Column token_count.input — null fraction: 0.0%'
+    description: 'Column token_count.input â€” null fraction: 0.0%'
     minimum: 2022.0
     maximum: 5976.0
   token_count.output:
     type: integer
     required: true
-    description: 'Column token_count.output — null fraction: 0.0%'
+    description: 'Column token_count.output â€” null fraction: 0.0%'
     minimum: 400.0
     maximum: 1196.0
+  extracted_facts_confidence:
+    type: number
+    required: true
+    description: Confidence of each extracted fact. MUST be float 0.0-1.0. BREAKING
+      CHANGE if changed to 0-100.
+    minimum: 0.0
+    maximum: 1.0
 quality:
   type: SodaChecks
   specification:
@@ -101,6 +82,9 @@ quality:
     - missing_count(doc_id) = 0
     - duplicate_count(doc_id) = 0
     - row_count >= 25
+    - min(extracted_facts_confidence) >= 0.0
+    - max(extracted_facts_confidence) <= 1.0
+    - avg(extracted_facts_confidence) between 0.01 and 0.99
 lineage:
   upstream: []
   downstream:
@@ -122,36 +106,3 @@ lineage:
     breaking_if_changed:
     - doc_id
     - extracted_facts.confidence
-llm_annotations:
-  extracted_facts:
-    description: An array of fact objects extracted from source documents, where each
-      fact contains a unique identifier, confidence score, associated entity references,
-      page reference, source excerpt, and extracted text content from the document
-    business_rule: 'Must be a valid JSON array; each fact object must contain required
-      fields: fact_id (UUID), confidence (float 0-1), entity_refs (array of UUIDs),
-      page_ref (integer >= 1), source_excerpt (string), and text (string); all facts
-      in array should reference the same source document'
-    cross_column_relationship: Entity UUIDs in entity_refs field must correspond to
-      entities in the 'entities' column; facts are extracted from the document identified
-      by 'doc_id' and 'source_path'; extraction_model determines the algorithm used
-      to generate these facts
-  entities:
-    description: JSON array containing structured metadata about entities extracted
-      from documents, where each entity has a unique identifier, canonical value,
-      name, and classification type. All samples show references to 'MCF.pdf' files
-      classified as 'OTHER' type entities.
-    business_rule: 'value must be valid JSON array format AND each entity object must
-      contain fields: entity_id (UUID format), canonical_value (string), name (string),
-      and type (string enum)'
-    cross_column_relationship: Related to doc_id as the parent document identifier;
-      entities are likely extracted from the file specified in source_path; the extracted_facts
-      column may reference or correlate with these entity_ids; extraction_model indicates
-      the AI/ML model used to identify these entities
-  extraction_model:
-    description: Identifier of the AI model used to extract information from the source
-      document, specifying the exact version of the extraction engine employed
-    business_rule: value is not null and length(value) > 0 and value matches pattern
-      '^[a-z0-9\-\.]+$'
-    cross_column_relationship: Links to extracted_facts and entities columns as the
-      model that generated those extraction results; associated with source_path and
-      source_hash to track which model version processed each source document

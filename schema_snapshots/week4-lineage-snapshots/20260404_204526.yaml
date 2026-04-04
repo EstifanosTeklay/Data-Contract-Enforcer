@@ -1,0 +1,32 @@
+contract_id: week4-lineage-snapshots
+snapshot_timestamp: '2026-04-04T20:45:26.067854Z'
+source_path: outputs/week4/lineage_snapshots.jsonl
+schema:
+  snapshot_id:
+    type: string
+    required: true
+    description: "Column snapshot_id \u2014 null fraction: 0.0%"
+    format: uuid
+    unique: true
+  codebase_root:
+    type: string
+    required: true
+    description: "Column codebase_root \u2014 null fraction: 0.0%"
+  git_commit:
+    type: string
+    required: true
+    description: Exactly 40 hex characters.
+    pattern: ^[a-f0-9]{40}$
+  nodes:
+    type: string
+    required: true
+    description: "Column nodes \u2014 null fraction: 0.0%"
+  edges:
+    type: string
+    required: true
+    description: "Column edges \u2014 null fraction: 0.0%"
+  captured_at:
+    type: string
+    required: true
+    description: "Column captured_at \u2014 null fraction: 0.0%"
+    format: date-time

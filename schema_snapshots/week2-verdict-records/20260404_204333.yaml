@@ -1,0 +1,64 @@
+contract_id: week2-verdict-records
+snapshot_timestamp: '2026-04-04T20:43:33.179277Z'
+source_path: outputs/week2/verdicts.jsonl
+schema:
+  verdict_id:
+    type: string
+    required: true
+    description: "Column verdict_id \u2014 null fraction: 0.0%"
+    format: uuid
+    unique: true
+  target_ref:
+    type: string
+    required: true
+    description: "Column target_ref \u2014 null fraction: 0.0%"
+  rubric_id:
+    type: string
+    required: true
+    description: "Column rubric_id \u2014 null fraction: 0.0%"
+    format: uuid
+  rubric_version:
+    type: string
+    required: true
+    description: "Column rubric_version \u2014 null fraction: 0.0%"
+  overall_verdict:
+    type: string
+    required: true
+    description: Must be exactly one of PASS, FAIL, WARN.
+    enum:
+    - PASS
+    - FAIL
+    - WARN
+  overall_score:
+    type: number
+    required: true
+    description: "Column overall_score \u2014 null fraction: 0.0%"
+    minimum: 1.0
+    maximum: 5.0
+  confidence:
+    type: number
+    required: true
+    description: Confidence in verdict. Float 0.0-1.0.
+    minimum: 0.0
+    maximum: 1.0
+  evaluated_at:
+    type: string
+    required: true
+    description: "Column evaluated_at \u2014 null fraction: 0.0%"
+    format: date-time
+  scores.code_quality:
+    type: string
+    required: true
+    description: "Column scores.code_quality \u2014 null fraction: 0.0%"
+  scores.test_coverage:
+    type: string
+    required: true
+    description: "Column scores.test_coverage \u2014 null fraction: 0.0%"
+  scores.documentation:
+    type: string
+    required: true
+    description: "Column scores.documentation \u2014 null fraction: 0.0%"
+  scores.security:
+    type: string
+    required: true
+    description: "Column scores.security \u2014 null fraction: 0.0%"

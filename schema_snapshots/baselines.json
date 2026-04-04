@@ -5,37 +5,28 @@
       "std": 6688.282747904604,
       "min": 804.0,
       "max": 39630.0,
-      "established_at": "2026-04-03T16:30:22.061704Z"
+      "established_at": "2026-04-04T20:45:26.018978Z"
     },
     "token_count.input": {
       "mean": 4159.06,
       "std": 1272.9902513373777,
       "min": 2022.0,
       "max": 5976.0,
-      "established_at": "2026-04-03T16:30:22.061721Z"
+      "established_at": "2026-04-04T20:45:26.018998Z"
     },
     "token_count.output": {
       "mean": 849.88,
       "std": 247.7471258508299,
       "min": 400.0,
       "max": 1196.0,
-      "established_at": "2026-04-03T16:30:22.061724Z"
-    }
-  },
-  "week5-event-records": {
-    "sequence_number": {
-      "mean": 4.8,
-      "std": 2.5872528966106905,
-      "min": 1.0,
-      "max": 9.0,
-      "established_at": "2026-04-03T16:31:07.971522Z"
+      "established_at": "2026-04-04T20:45:26.019007Z"
     },
-    "payload.confidence_score": {
-      "mean": 0.8088,
-      "std": 0.0912417734619938,
-      "min": 0.66,
-      "max": 0.97,
-      "established_at": "2026-04-03T16:31:07.971545Z"
+    "extracted_facts_confidence": {
+      "mean": 0.8181195238095237,
+      "std": 0.08837404493375856,
+      "min": 0.6504,
+      "max": 0.9792,
+      "established_at": "2026-04-04T20:45:26.019012Z"
     }
   },
   "week2-verdict-records": {
@@ -44,14 +35,30 @@
       "std": NaN,
       "min": 3.75,
       "max": 3.75,
-      "established_at": "2026-04-03T16:30:08.810313Z"
+      "established_at": "2026-04-04T20:45:25.968296Z"
     },
     "confidence": {
       "mean": 0.92,
       "std": NaN,
       "min": 0.92,
       "max": 0.92,
-      "established_at": "2026-04-03T16:30:08.810332Z"
+      "established_at": "2026-04-04T20:45:25.968314Z"
+    }
+  },
+  "week5-event-records": {
+    "sequence_number": {
+      "mean": 4.8,
+      "std": 2.5872528966106905,
+      "min": 1.0,
+      "max": 9.0,
+      "established_at": "2026-04-04T20:45:26.095948Z"
+    },
+    "payload.confidence_score": {
+      "mean": 0.8088,
+      "std": 0.0912417734619938,
+      "min": 0.66,
+      "max": 0.97,
+      "established_at": "2026-04-04T20:45:26.095959Z"
     }
   },
   "langsmith-trace-records": {
@@ -60,42 +67,42 @@
       "std": 2959.7214581781172,
       "min": 4125.0,
       "max": 12898.0,
-      "established_at": "2026-04-03T16:31:14.290556Z"
+      "established_at": "2026-04-04T20:45:26.148705Z"
     },
     "prompt_tokens": {
       "mean": 6896.6,
       "std": 2850.9868320752844,
       "min": 3156.0,
       "max": 11924.0,
-      "established_at": "2026-04-03T16:31:14.290571Z"
+      "established_at": "2026-04-04T20:45:26.148720Z"
     },
     "completion_tokens": {
       "mean": 945.28,
       "std": 379.4656901486615,
       "min": 310.0,
       "max": 1953.0,
-      "established_at": "2026-04-03T16:31:14.290575Z"
+      "established_at": "2026-04-04T20:45:26.148724Z"
     },
     "total_cost": {
       "mean": 0.034869,
       "std": 0.011291776864160928,
       "min": 0.017265,
       "max": 0.054351,
-      "established_at": "2026-04-03T16:31:14.290579Z"
+      "established_at": "2026-04-04T20:45:26.148730Z"
     },
     "outputs.overall_score": {
       "mean": 3.9210000000000003,
       "std": 0.5853099843482749,
       "min": 3.11,
       "max": 4.58,
-      "established_at": "2026-04-03T16:31:14.290586Z"
+      "established_at": "2026-04-04T20:45:26.148738Z"
     },
     "outputs.confidence": {
       "mean": 0.7990000000000002,
       "std": 0.08812238963825003,
       "min": 0.68,
       "max": 0.94,
-      "established_at": "2026-04-03T16:31:14.290591Z"
+      "established_at": "2026-04-04T20:45:26.148744Z"
     }
   }
 }

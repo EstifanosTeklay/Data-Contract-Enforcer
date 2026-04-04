@@ -1,0 +1,5 @@
+fastapi==0.111.0
+uvicorn==0.30.1
+asyncpg==0.29.0
+watchfiles==0.22.0
+PyYAML==6.0.1

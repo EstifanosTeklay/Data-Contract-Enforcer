@@ -40,6 +40,7 @@ from pathlib import Path
 
 import numpy as np
 import yaml
+from ledger_bridge import append_violation_event
 
 warnings.filterwarnings("ignore")
 
@@ -145,6 +146,8 @@ def write_violation(violation: dict):
     ensure_dir(os.path.dirname(VIOLATION_LOG))
     with open(VIOLATION_LOG, "a") as f:
         f.write(json.dumps(violation) + "\n")
+    version = append_violation_event(violation, require_blame=False)
+    print(f"  ✓ appended to ledger stream → audit-contract-violations @ version {version}")
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:
     denom = (np.linalg.norm(a) * np.linalg.norm(b)) + 1e-9

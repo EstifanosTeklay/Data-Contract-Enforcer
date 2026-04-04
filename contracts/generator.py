@@ -30,6 +30,7 @@ from pathlib import Path
 import requests
 import pandas as pd
 import yaml
+from ledger_bridge import append_schema_snapshot_event
 
 try:
     from dotenv import load_dotenv
@@ -146,7 +147,7 @@ def detect_week(source_path: str) -> str:
 def load_jsonl_flat(path: str) -> pd.DataFrame:
     """Load JSONL into a flat DataFrame (top-level keys only)."""
     records = []
-    with open(path) as f:
+    with open(path, encoding="utf-8") as f:
         for line in f:
             line = line.strip()
             if line:
@@ -157,6 +158,45 @@ def load_jsonl_flat(path: str) -> pd.DataFrame:
     if not records:
         return pd.DataFrame()
     return pd.json_normalize(records, max_level=1)
+
+
+def load_jsonl_records(path: str) -> list:
+    """Load raw JSONL records (without normalization)."""
+    records = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                records.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return records
+
+
+def extract_nested_confidence(raw_records: list) -> pd.Series:
+    """
+    Extract extracted_facts[*].confidence values from raw JSONL records.
+    Returns a pandas Series of parsed float values.
+    """
+    values = []
+    for rec in raw_records:
+        if not isinstance(rec, dict):
+            continue
+        facts = rec.get("extracted_facts", [])
+        if not isinstance(facts, list):
+            continue
+        for fact in facts:
+            if not isinstance(fact, dict):
+                continue
+            conf = fact.get("confidence")
+            try:
+                if conf is not None:
+                    values.append(float(conf))
+            except (TypeError, ValueError):
+                continue
+    return pd.Series(values, dtype="float64")
 
 def infer_type(series: pd.Series) -> str:
     dtype = str(series.dtype)
@@ -270,7 +310,7 @@ def profile_dataframe(df: pd.DataFrame) -> dict:
     return profile
 
 
-def profile_dataframe(df: pd.DataFrame) -> dict:  # noqa: F811
+def profile_dataframe(df: pd.DataFrame, raw_records: list | None = None) -> dict:  # noqa: F811
     profile = {}
     for col in df.columns:
         s = df[col]
@@ -337,6 +377,27 @@ def profile_dataframe(df: pd.DataFrame) -> dict:  # noqa: F811
                             f"WARNING: mean={mean:.4f} < 0.01 — confidence appears broken"
                         )
         profile[col] = entry
+
+    # Week 3 synthetic field based on nested extracted_facts[*].confidence values.
+    if "extracted_facts" in df.columns and raw_records:
+        conf_series = extract_nested_confidence(raw_records).dropna()
+        if len(conf_series) > 0:
+            profile["extracted_facts_confidence"] = {
+                "name": "extracted_facts_confidence",
+                "dtype": "float64",
+                "inferred_type": "number",
+                "stats": {
+                    "min": float(conf_series.min()),
+                    "max": float(conf_series.max()),
+                    "mean": float(conf_series.mean()),
+                    "stddev": float(conf_series.std()),
+                },
+                "null_fraction": 0.0,
+                "cardinality": int(conf_series.nunique()),
+                "sample_values": [str(v) for v in conf_series.drop_duplicates().head(5).tolist()],
+                "all_values": [],
+            }
+
     return profile
 
 # ---------------------------------------------------------------------------
@@ -347,7 +408,7 @@ def load_lineage_graph(lineage_path: str = "outputs/week4/lineage_snapshots.json
     """Return latest snapshot as dict, or empty dict if not found."""
     if not Path(lineage_path).exists():
         return {}
-    with open(lineage_path) as f:
+    with open(lineage_path, encoding="utf-8") as f:
         snapshots = [json.loads(l) for l in f if l.strip()]
     if not snapshots:
         return {}
@@ -542,6 +603,13 @@ def _known_constraints(week_key: str) -> dict:
                                   "description": "List of facts extracted from the document. Must be non-empty."},
             "entities": {"type": "array", "required": True,
                           "description": "List of entities referenced by extracted facts."},
+            "extracted_facts_confidence": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "required": True,
+                "description": "Confidence of each extracted fact. MUST be float 0.0-1.0. BREAKING CHANGE if changed to 0-100."
+            },
         }
     elif week_key == "week2":
         base = {
@@ -874,7 +942,7 @@ def write_statistical_baselines(week_key: str, col_profile: dict):
     existing = {}
     if Path(baseline_path).exists():
         try:
-            with open(baseline_path) as f:
+            with open(baseline_path, encoding="utf-8") as f:
                 existing = json.load(f)
         except Exception:
             existing = {}
@@ -898,9 +966,9 @@ def write_statistical_baselines(week_key: str, col_profile: dict):
 
     if updated:
         ensure_dir(os.path.dirname(baseline_path))
-        with open(baseline_path, "w") as f:
+        with open(baseline_path, "w", encoding="utf-8") as f:
             json.dump(existing, f, indent=2)
-        print(f"  ✓ baselines written → {baseline_path}")
+        print(f"  [OK] baselines written -> {baseline_path}")
 
 
 def save_schema_snapshot(week_key: str, schema: dict, source_path: str):
@@ -916,9 +984,11 @@ def save_schema_snapshot(week_key: str, schema: dict, source_path: str):
         "source_path": source_path,
         "schema": schema
     }
-    with open(snap_path, "w") as f:
+    with open(snap_path, "w", encoding="utf-8") as f:
         yaml.dump(snap, f, default_flow_style=False, sort_keys=False)
-    print(f"  ✓ snapshot → {snap_path}")
+    print(f"  [OK] snapshot -> {snap_path}")
+    version = append_schema_snapshot_event(contract_id, snap)
+    print(f"  [OK] schema snapshot appended -> audit-schema-snapshots-{contract_id} @ version {version}")
 
 # ---------------------------------------------------------------------------
 # Main generation pipeline
@@ -930,28 +1000,29 @@ def generate_contract(source_path: str, output_dir: str,
     """Full pipeline: profile → lineage → annotate → write contracts."""
 
     if not Path(source_path).exists():
-        print(f"  ✗ Source not found: {source_path}")
+        print(f"  [ERROR] Source not found: {source_path}")
         sys.exit(1)
 
     week_key = detect_week(source_path)
-    print(f"\n→ Generating contract for: {source_path} (detected: {week_key})")
+    print(f"\n-> Generating contract for: {source_path} (detected: {week_key})")
 
     # Load data
-    df = load_jsonl_flat(source_path)
+    raw_records = load_jsonl_records(source_path)
+    df = pd.json_normalize(raw_records, max_level=1) if raw_records else pd.DataFrame()
     row_count = len(df)
-    print(f"  ✓ loaded {row_count} records, {len(df.columns)} top-level columns")
+    print(f"  [OK] loaded {row_count} records, {len(df.columns)} top-level columns")
 
     if df.empty:
-        print("  ✗ Empty dataset — aborting")
+        print("  [ERROR] Empty dataset - aborting")
         return
 
     # Step 1+2: Profile
-    col_profile = profile_dataframe(df)
+    col_profile = profile_dataframe(df, raw_records=raw_records)
 
     # Warn on confidence scale issues
     for col, info in col_profile.items():
         if "confidence_scale_warning" in info:
-            print(f"  ⚠  {info['confidence_scale_warning']}")
+            print(f"  [WARN] {info['confidence_scale_warning']}")
 
     # Write statistical baselines to schema_snapshots/baselines.json
     write_statistical_baselines(week_key, col_profile)
@@ -959,13 +1030,13 @@ def generate_contract(source_path: str, output_dir: str,
     # Step 3: Lineage context
     lineage = load_lineage_graph()
     downstream = find_downstream_consumers(week_key, lineage)
-    print(f"  ✓ lineage: {len(downstream)} downstream consumers identified")
+    print(f"  [OK] lineage: {len(downstream)} downstream consumers identified")
 
     # Step 4: LLM annotation (optional, ambiguous columns only)
     llm_annotations = {}
     if annotate and not fast:
         if not os.getenv("OPENROUTER_API_KEY"):
-            print("  ⚠  --annotate enabled but OPENROUTER_API_KEY not found. Skipping LLM annotation.")
+            print("  [WARN] --annotate enabled but OPENROUTER_API_KEY not found. Skipping LLM annotation.")
         cols = list(df.columns)
         ambiguous = [
             c for c in cols
@@ -982,11 +1053,11 @@ def generate_contract(source_path: str, output_dir: str,
             )
             if ann:
                 llm_annotations[col] = ann
-                print(f"  ✓ LLM annotated: {col}")
+                print(f"  [OK] LLM annotated: {col}")
         if annotate and os.getenv("OPENROUTER_API_KEY") and not llm_annotations:
-            print("  ⚠  No LLM annotations were produced for this dataset.")
+            print("  [WARN] No LLM annotations were produced for this dataset.")
     elif annotate and fast:
-        print("  ⚡ Fast mode enabled — skipping LLM annotation.")
+        print("  [FAST] Fast mode enabled - skipping LLM annotation.")
 
     # Step 5: Build and write contract
     ensure_dir(output_dir)
@@ -1008,26 +1079,26 @@ def generate_contract(source_path: str, output_dir: str,
     }
     contract_file = f"{output_dir}/{name_map.get(week_key, week_key)}.yaml"
 
-    with open(contract_file, "w") as f:
+    with open(contract_file, "w", encoding="utf-8") as f:
         yaml.dump(contract, f, default_flow_style=False,
                   sort_keys=False, allow_unicode=True)
-    print(f"  ✓ contract → {contract_file}")
+    print(f"  [OK] contract -> {contract_file}")
 
     # dbt schema.yml
     dbt_schema = build_dbt_schema(week_key, contract["schema"])
     dbt_file = f"{output_dir}/{name_map.get(week_key, week_key)}_dbt.yml"
-    with open(dbt_file, "w") as f:
+    with open(dbt_file, "w", encoding="utf-8") as f:
         yaml.dump(dbt_schema, f, default_flow_style=False, sort_keys=False)
-    print(f"  ✓ dbt schema → {dbt_file}")
+    print(f"  [OK] dbt schema -> {dbt_file}")
 
     # Schema snapshot
     save_schema_snapshot(week_key, contract["schema"], source_path)
 
     # Summary
     n_clauses = len(contract["schema"])
-    print(f"  ✓ {n_clauses} schema clauses generated")
+    print(f"  [OK] {n_clauses} schema clauses generated")
     if n_clauses < 8:
-        print(f"  ⚠  Only {n_clauses} clauses — contract may need manual review")
+        print(f"  [WARN] Only {n_clauses} clauses - contract may need manual review")
 
     return contract
 
@@ -1077,7 +1148,7 @@ def main():
                                   annotate=args.annotate, verbose=args.verbose,
                                   fast=args.fast)
             else:
-                print(f"\n  ⚠  Skipping {key} — {path} not found")
+                print(f"\n  [WARN] Skipping {key} - {path} not found")
     else:
         generate_contract(args.source, args.output,
                           annotate=args.annotate, verbose=args.verbose,

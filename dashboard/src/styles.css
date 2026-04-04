@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  @apply bg-base text-slate-100 font-sans antialiased;
+  margin: 0;
+  min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 8% 6%, rgba(99, 102, 241, 0.32), transparent 34%),
+    radial-gradient(circle at 92% 94%, rgba(16, 185, 129, 0.16), transparent 28%),
+    linear-gradient(180deg, rgba(15, 17, 23, 0.96), rgba(11, 14, 20, 0.98));
+}
+
+.card {
+  @apply bg-card/90 border border-slate-700/40 rounded-xl shadow-lg;
+}
+
+.panel {
+  @apply rounded-2xl border border-slate-700/50 bg-slate-900/55 backdrop-blur-sm shadow-xl shadow-black/20;
+}
+
+.panel-gradient {
+  @apply rounded-2xl border border-indigo-400/20 shadow-xl;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.3), transparent 36%),
+    linear-gradient(135deg, rgba(26, 29, 46, 0.95), rgba(16, 24, 39, 0.95));
+}
+
+.bg-grid {
+  background-image:
+    linear-gradient(rgba(99, 102, 241, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.08) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+.nav-shell {
+  @apply rounded-2xl border border-slate-700/60 p-4;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(99, 102, 241, 0.22), transparent 55%),
+    linear-gradient(150deg, rgba(15, 23, 42, 0.92), rgba(17, 24, 39, 0.9));
+}
+
+.nav-item {
+  @apply w-full rounded-xl border border-transparent px-3 py-2.5 text-slate-300 transition flex items-center gap-3;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.34), rgba(15, 23, 42, 0.24));
+}
+
+.nav-item:hover {
+  @apply border-slate-600/70;
+  background: linear-gradient(150deg, rgba(30, 41, 59, 0.66), rgba(15, 23, 42, 0.66));
+}
+
+.nav-item-active {
+  @apply text-white border-indigo-300/40 shadow-lg shadow-indigo-950/40;
+  background:
+    linear-gradient(140deg, rgba(99, 102, 241, 0.48), rgba(79, 70, 229, 0.34));
+}
+
+.nav-icon {
+  @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border text-[11px] font-bold tracking-wide;
+}
+
+.nav-icon-active {
+  @apply border-white/30 text-white;
+}
+
+.nav-icon-indigo {
+  @apply border-indigo-400/30 text-indigo-200;
+  background: rgba(99, 102, 241, 0.22);
+}
+
+.nav-icon-red {
+  @apply border-red-400/30 text-red-200;
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.nav-icon-emerald {
+  @apply border-emerald-400/30 text-emerald-200;
+  background: rgba(16, 185, 129, 0.2);
+}
+
+.nav-icon-sky {
+  @apply border-sky-400/30 text-sky-200;
+  background: rgba(56, 189, 248, 0.2);
+}
+
+.nav-icon-amber {
+  @apply border-amber-400/30 text-amber-200;
+  background: rgba(245, 158, 11, 0.2);
+}
+
+.nav-chevron {
+  @apply text-lg leading-none text-slate-500 transition-transform duration-200;
+}
+
+.nav-item:hover .nav-chevron,
+.nav-chevron-active {
+  @apply text-slate-200;
+  transform: translateX(2px);
+}
+
+.skeleton {
+  @apply animate-pulse rounded-md bg-slate-700/40;
+}
+
+.badge {
+  @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+}

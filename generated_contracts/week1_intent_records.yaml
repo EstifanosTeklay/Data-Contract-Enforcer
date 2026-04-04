@@ -2,10 +2,10 @@ kind: DataContract
 apiVersion: v3.0.0
 id: week1-intent-records
 info:
-  title: Week 1 Intent-Code Correlator � Intent Records
+  title: Week 1 Intent-Code Correlator — Intent Records
   version: 1.0.0
   owner: week1-team
-  description: Auto-generated contract for week1 outputs. Generated at 2026-04-03T16:30:08.772601Z
+  description: Auto-generated contract for week1 outputs. Generated at 2026-04-04T20:45:25.644401Z
     from 10 records.
 servers:
   local:
@@ -20,7 +20,7 @@ schema:
   intent_id:
     type: string
     required: true
-    description: 'Column intent_id � null fraction: 0.0%'
+    description: 'Column intent_id — null fraction: 0.0%'
     enum:
     - fdc9b348-a030-4431-94da-b433cb82f962
     - 73aeaa9a-da32-4769-b2e0-02dd9f44238d
@@ -36,48 +36,27 @@ schema:
   description:
     type: string
     required: true
-    description: A human-readable text description of the intent or change, typically
-      containing the intent identifier, the operation type, and the mutation or action
-      being performed
+    description: 'Column description — null fraction: 0.0%'
     enum:
     - 'Intent INT-001: write_to_file operation via AST_REFACTOR mutation'
     - 'Synthetic padding: configuration update for module init'
-    x_business_rule: length(description) > 0 AND description IS NOT NULL AND (description
-      LIKE 'Intent INT-%' OR description LIKE 'Synthetic padding:%')
-    x_cross_column_relationship: The intent identifier mentioned in the description
-      (e.g., 'INT-001') should match the value in the intent_id column. The description
-      provides context for the code_refs and may influence governance_tags classification.
   code_refs:
     type: string
     required: true
-    description: JSON array containing code reference objects with metadata about
-      source code locations, including file paths, line number ranges, function/symbol
-      names, and confidence scores for linking code to business intent or requirements
+    description: 'Column code_refs — null fraction: 0.0%'
     enum:
     - '[{"confidence": 0.87, "file": "src/config.py", "line_end": 50, "line_start":
       1, "symbol": "write_to_file"}]'
     - '[{"confidence": 0.75, "file": "src/config.py", "line_end": 20, "line_start":
       1, "symbol": "load_config"}]'
-    x_business_rule: must be valid JSON array; each object must contain 'confidence'
-      (float between 0 and 1), 'file' (non-empty string), 'line_end' (positive integer
-      >= line_start), 'line_start' (positive integer), and 'symbol' (non-empty string)
-    x_cross_column_relationship: references code implementation details for the business
-      intent specified in 'intent_id' and elaborated in 'description'; may be tagged
-      with relevant labels from 'governance_tags' for compliance tracking
   governance_tags:
     type: string
     required: true
-    description: A JSON array of governance-related tags or labels associated with
-      the record, used for categorizing and filtering data based on compliance, audit,
-      or data management requirements
-    x_business_rule: value IS NULL OR (JSON_VALID(value) AND JSON_TYPE(value) = 'array')
-    x_cross_column_relationship: Provides governance metadata that may influence how
-      the intent_id record is handled, audited, or monitored; tags may be applied
-      based on the content of the description or code_refs columns
+    description: 'Column governance_tags — null fraction: 0.0%'
   created_at:
     type: string
     required: true
-    description: 'Column created_at � null fraction: 0.0%'
+    description: 'Column created_at — null fraction: 0.0%'
     enum:
     - '2026-02-20T22:37:15.635Z'
     - '2026-02-20T22:37:16.770Z'
@@ -100,31 +79,3 @@ quality:
 lineage:
   upstream: []
   downstream: []
-llm_annotations:
-  description:
-    description: A human-readable text description of the intent or change, typically
-      containing the intent identifier, the operation type, and the mutation or action
-      being performed
-    business_rule: length(description) > 0 AND description IS NOT NULL AND (description
-      LIKE 'Intent INT-%' OR description LIKE 'Synthetic padding:%')
-    cross_column_relationship: The intent identifier mentioned in the description
-      (e.g., 'INT-001') should match the value in the intent_id column. The description
-      provides context for the code_refs and may influence governance_tags classification.
-  code_refs:
-    description: JSON array containing code reference objects with metadata about
-      source code locations, including file paths, line number ranges, function/symbol
-      names, and confidence scores for linking code to business intent or requirements
-    business_rule: must be valid JSON array; each object must contain 'confidence'
-      (float between 0 and 1), 'file' (non-empty string), 'line_end' (positive integer
-      >= line_start), 'line_start' (positive integer), and 'symbol' (non-empty string)
-    cross_column_relationship: references code implementation details for the business
-      intent specified in 'intent_id' and elaborated in 'description'; may be tagged
-      with relevant labels from 'governance_tags' for compliance tracking
-  governance_tags:
-    description: A JSON array of governance-related tags or labels associated with
-      the record, used for categorizing and filtering data based on compliance, audit,
-      or data management requirements
-    business_rule: value IS NULL OR (JSON_VALID(value) AND JSON_TYPE(value) = 'array')
-    cross_column_relationship: Provides governance metadata that may influence how
-      the intent_id record is handled, audited, or monitored; tags may be applied
-      based on the content of the description or code_refs columns

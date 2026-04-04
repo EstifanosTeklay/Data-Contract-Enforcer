@@ -9,8 +9,7 @@ models:
     - not_null
     - unique
   - name: target_ref
-    description: File path reference pointing to the source code module or file being
-      evaluated, typically a Python module path in the codebase
+    description: "Column target_ref \u2014 null fraction: 0.0%"
     tests:
     - not_null
   - name: rubric_id
@@ -22,8 +21,7 @@ models:
     tests:
     - not_null
   - name: overall_verdict
-    description: Final pass/fail determination for an evaluation based on rubric criteria
-      and scoring thresholds
+    description: Must be exactly one of PASS, FAIL, WARN.
     tests:
     - not_null
     - accepted_values:

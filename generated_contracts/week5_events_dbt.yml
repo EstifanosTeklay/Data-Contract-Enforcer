@@ -39,9 +39,7 @@ models:
         - AuditRecord
         - Domain
   - name: sequence_number
-    description: Sequential order number indicating the position or sequence of an
-      event within a series, starting from 1 and incrementing by 1 for each subsequent
-      event
+    description: Monotonically increasing per aggregate_id. No gaps, no duplicates.
     tests:
     - not_null
   - name: schema_version

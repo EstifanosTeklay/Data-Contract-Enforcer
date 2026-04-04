@@ -20,9 +20,7 @@ models:
         - 5f301c8a-0809-4fde-b4ab-a4d32ce5709b
         - 53f0c459-6b0b-4894-8e91-e573d52b3a0a
   - name: description
-    description: A human-readable text description of the intent or change, typically
-      containing the intent identifier, the operation type, and the mutation or action
-      being performed
+    description: "Column description \u2014 null fraction: 0.0%"
     tests:
     - not_null
     - accepted_values:
@@ -30,9 +28,7 @@ models:
         - 'Intent INT-001: write_to_file operation via AST_REFACTOR mutation'
         - 'Synthetic padding: configuration update for module init'
   - name: code_refs
-    description: JSON array containing code reference objects with metadata about
-      source code locations, including file paths, line number ranges, function/symbol
-      names, and confidence scores for linking code to business intent or requirements
+    description: "Column code_refs \u2014 null fraction: 0.0%"
     tests:
     - not_null
     - accepted_values:
@@ -42,9 +38,7 @@ models:
         - '[{"confidence": 0.75, "file": "src/config.py", "line_end": 20, "line_start":
           1, "symbol": "load_config"}]'
   - name: governance_tags
-    description: A JSON array of governance-related tags or labels associated with
-      the record, used for categorizing and filtering data based on compliance, audit,
-      or data management requirements
+    description: "Column governance_tags \u2014 null fraction: 0.0%"
     tests:
     - not_null
   - name: created_at

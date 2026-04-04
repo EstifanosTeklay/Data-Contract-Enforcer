@@ -2,10 +2,10 @@ kind: DataContract
 apiVersion: v3.0.0
 id: langsmith-trace-records
 info:
-  title: LangSmith Trace Records — AI Pipeline Observability
+  title: LangSmith Trace Records â€” AI Pipeline Observability
   version: 1.0.0
   owner: traces-team
-  description: Auto-generated contract for traces outputs. Generated at 2026-04-03T16:31:33.775558Z
+  description: Auto-generated contract for traces outputs. Generated at 2026-04-04T20:45:26.151116Z
     from 25 records.
 servers:
   local:
@@ -20,44 +20,31 @@ schema:
   id:
     type: string
     required: true
-    description: 'Column id — null fraction: 0.0%'
+    description: 'Column id â€” null fraction: 0.0%'
     format: uuid
     unique: true
   name:
     type: string
     required: true
-    description: The name or identifier of the execution trace, representing a specific
-      chain or process being tracked. Examples include document extraction and judicial
-      verdict processing chains.
+    description: 'Column name â€” null fraction: 0.0%'
     enum:
     - document-extraction-chain
     - judicial-verdict-chain
-    x_business_rule: value is not null and length(value) > 0 and value matches pattern
-      '*-chain'
-    x_cross_column_relationship: This name identifies the specific trace instance
-      referenced by 'id' and describes what operation was performed during the time
-      period between 'start_time' and 'end_time'. The 'run_type' likely categorizes
-      the execution type while 'name' provides the specific chain identifier.
   run_type:
     type: string
     required: true
-    description: 'Column run_type — null fraction: 0.0%'
+    description: 'Column run_type â€” null fraction: 0.0%'
     enum:
     - chain
     - llm
   error:
     type: string
     required: false
-    description: Stores error information or exception details that occurred during
-      the execution of a trace, typically null when the trace completed successfully
-    x_business_rule: value IS NULL OR length(value) > 0
-    x_cross_column_relationship: When error is NOT NULL, end_time should be populated
-      indicating when the error occurred; error presence may correlate with specific
-      run_type values that failed
+    description: 'Column error â€” null fraction: 100.0%'
   start_time:
     type: string
     required: true
-    description: 'Column start_time — null fraction: 0.0%'
+    description: 'Column start_time â€” null fraction: 0.0%'
     format: date-time
   end_time:
     type: string
@@ -67,13 +54,13 @@ schema:
   total_tokens:
     type: integer
     required: true
-    description: 'Column total_tokens — null fraction: 0.0%'
+    description: 'Column total_tokens â€” null fraction: 0.0%'
     minimum: 0
     maximum: 12898.0
   prompt_tokens:
     type: integer
     required: true
-    description: 'Column prompt_tokens — null fraction: 0.0%'
+    description: 'Column prompt_tokens â€” null fraction: 0.0%'
     minimum: 0
     maximum: 11924.0
   completion_tokens:
@@ -85,25 +72,20 @@ schema:
   total_cost:
     type: number
     required: true
-    description: The total monetary cost associated with executing a trace, measured
-      in dollars with precision to six decimal places
+    description: Cost in USD. Must be >= 0.
     minimum: 0.0
     maximum: 0.054351
-    x_business_rule: value >= 0 and value is numeric
-    x_cross_column_relationship: Related to 'run_type' which may determine cost calculation
-      method; may aggregate to null or 0 if 'error' is present; cost accumulates from
-      'start_time' until completion
   tags:
     type: string
     required: true
-    description: 'Column tags — null fraction: 0.0%'
+    description: 'Column tags â€” null fraction: 0.0%'
     enum:
     - '["week3", "extraction"]'
     - '["week2", "verdict", "judicial"]'
   parent_run_id:
     type: string
     required: false
-    description: 'Column parent_run_id — null fraction: 44.0%'
+    description: 'Column parent_run_id â€” null fraction: 44.0%'
     enum:
     - 43b01f74-de17-41b7-8b84-73f0c86bebd0
     - 9d4c46ac-4bd8-4784-9d06-f0181477c522
@@ -123,7 +105,7 @@ schema:
   session_id:
     type: string
     required: true
-    description: 'Column session_id — null fraction: 0.0%'
+    description: 'Column session_id â€” null fraction: 0.0%'
     enum:
     - 3dd3bfb1-def6-406d-a327-8ca956c2938f
     - 9c7550f8-3400-4d6f-93fe-d36102a32bba
@@ -131,7 +113,7 @@ schema:
   inputs.doc_id:
     type: string
     required: false
-    description: 'Column inputs.doc_id — null fraction: 40.0%'
+    description: 'Column inputs.doc_id â€” null fraction: 40.0%'
     enum:
     - fc023540-35cb-4b8e-a648-56e305e1cfc6
     - 9c46a07a-b4d0-42b0-9d64-a7c193108bd7
@@ -152,7 +134,7 @@ schema:
   inputs.content_preview:
     type: string
     required: false
-    description: 'Column inputs.content_preview — null fraction: 40.0%'
+    description: 'Column inputs.content_preview â€” null fraction: 40.0%'
     enum:
     - Document content preview 0...
     - Document content preview 1...
@@ -172,7 +154,7 @@ schema:
   inputs.source_path:
     type: string
     required: false
-    description: 'Column inputs.source_path — null fraction: 40.0%'
+    description: 'Column inputs.source_path â€” null fraction: 40.0%'
     enum:
     - documents/doc_0000.pdf
     - documents/doc_0001.pdf
@@ -192,7 +174,7 @@ schema:
   outputs.extracted_facts:
     type: string
     required: false
-    description: 'Column outputs.extracted_facts — null fraction: 40.0%'
+    description: 'Column outputs.extracted_facts â€” null fraction: 40.0%'
     enum:
     - '[{"confidence": 0.8572, "fact_id": "dfe7cc06-6f94-45f9-a2fe-a3b14690484e",
       "text": "Extracted fact from document 0"}]'
@@ -227,25 +209,25 @@ schema:
   inputs.target_ref:
     type: string
     required: false
-    description: 'Column inputs.target_ref — null fraction: 60.0%'
+    description: 'Column inputs.target_ref â€” null fraction: 60.0%'
   inputs.rubric_version:
     type: string
     required: false
-    description: 'Column inputs.rubric_version — null fraction: 60.0%'
+    description: 'Column inputs.rubric_version â€” null fraction: 60.0%'
   outputs.overall_verdict:
     type: string
     required: false
-    description: 'Column outputs.overall_verdict — null fraction: 60.0%'
+    description: 'Column outputs.overall_verdict â€” null fraction: 60.0%'
   outputs.overall_score:
     type: number
     required: false
-    description: 'Column outputs.overall_score — null fraction: 60.0%'
+    description: 'Column outputs.overall_score â€” null fraction: 60.0%'
     minimum: 3.11
     maximum: 4.58
   outputs.confidence:
     type: number
     required: false
-    description: 'Column outputs.confidence — null fraction: 60.0%'
+    description: 'Column outputs.confidence â€” null fraction: 60.0%'
     minimum: 0.68
     maximum: 0.94
 quality:
@@ -274,28 +256,3 @@ lineage:
     - total_tokens
     - prompt_tokens
     - completion_tokens
-llm_annotations:
-  name:
-    description: The name or identifier of the execution trace, representing a specific
-      chain or process being tracked. Examples include document extraction and judicial
-      verdict processing chains.
-    business_rule: value is not null and length(value) > 0 and value matches pattern
-      '*-chain'
-    cross_column_relationship: This name identifies the specific trace instance referenced
-      by 'id' and describes what operation was performed during the time period between
-      'start_time' and 'end_time'. The 'run_type' likely categorizes the execution
-      type while 'name' provides the specific chain identifier.
-  error:
-    description: Stores error information or exception details that occurred during
-      the execution of a trace, typically null when the trace completed successfully
-    business_rule: value IS NULL OR length(value) > 0
-    cross_column_relationship: When error is NOT NULL, end_time should be populated
-      indicating when the error occurred; error presence may correlate with specific
-      run_type values that failed
-  total_cost:
-    description: The total monetary cost associated with executing a trace, measured
-      in dollars with precision to six decimal places
-    business_rule: value >= 0 and value is numeric
-    cross_column_relationship: Related to 'run_type' which may determine cost calculation
-      method; may aggregate to null or 0 if 'error' is present; cost accumulates from
-      'start_time' until completion

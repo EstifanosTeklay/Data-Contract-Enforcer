@@ -40,6 +40,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
+from ledger_bridge import append_violation_event
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -440,6 +441,8 @@ def write_violation(violation: dict):
     with open(VIOLATION_LOG, "a") as f:
         f.write(json.dumps(violation) + "\n")
     print(f"  ✓ violation written → {VIOLATION_LOG}")
+    version = append_violation_event(violation, require_blame=True)
+    print(f"  ✓ appended to ledger stream → audit-contract-violations @ version {version}")
 
 
 def build_violation_record(check_result: dict, contract_id: str,

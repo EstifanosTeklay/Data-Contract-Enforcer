@@ -18,21 +18,15 @@ models:
     tests:
     - not_null
   - name: extracted_facts
-    description: An array of fact objects extracted from source documents, where each
-      fact contains a unique identifier, confidence score, associated entity references,
-      page reference, source excerpt, and extracted text content from the document
+    description: List of facts extracted from the document. Must be non-empty.
     tests:
     - not_null
   - name: entities
-    description: JSON array containing structured metadata about entities extracted
-      from documents, where each entity has a unique identifier, canonical value,
-      name, and classification type. All samples show references to 'MCF.pdf' files
-      classified as 'OTHER' type entities.
+    description: List of entities referenced by extracted facts.
     tests:
     - not_null
   - name: extraction_model
-    description: Identifier of the AI model used to extract information from the source
-      document, specifying the exact version of the extraction engine employed
+    description: Model identifier. Must match claude-* or gpt-*.
     tests:
     - not_null
   - name: processing_time_ms
@@ -51,6 +45,11 @@ models:
     description: "Column token_count.output \u2014 null fraction: 0.0%"
     tests:
     - not_null
+  - name: extracted_facts_confidence
+    description: Confidence of each extracted fact. MUST be float 0.0-1.0. BREAKING
+      CHANGE if changed to 0-100.
+    tests:
+    - not_null
   tests:
   - dbt_utils.expression_is_true:
       expression: processing_time_ms >= 1 and processing_time_ms <= 39630.0
@@ -61,6 +60,10 @@ models:
   - dbt_utils.expression_is_true:
       expression: token_count.output >= 400.0 and token_count.output <= 1196.0
       name: token_count.output_range_400.0_to_1196.0
+  - dbt_utils.expression_is_true:
+      expression: extracted_facts_confidence >= 0.0 and extracted_facts_confidence
+        <= 1.0
+      name: extracted_facts_confidence_range_0.0_to_1.0
   - dbt_utils.expression_is_true:
       expression: processing_time_ms > 0
       name: processing_time_positive

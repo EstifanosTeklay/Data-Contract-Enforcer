@@ -2,10 +2,10 @@ kind: DataContract
 apiVersion: v3.0.0
 id: week5-event-records
 info:
-  title: Week 5 Event Sourcing Platform — Event Records
+  title: Week 5 Event Sourcing Platform â€” Event Records
   version: 1.0.0
   owner: week5-team
-  description: Auto-generated contract for week5 outputs. Generated at 2026-04-03T16:31:14.247291Z
+  description: Auto-generated contract for week5 outputs. Generated at 2026-04-04T20:45:26.097499Z
     from 50 records.
 servers:
   local:
@@ -40,7 +40,7 @@ schema:
     type: string
     required: true
     description: 'ID of the aggregate root. Format: ''{type}-{id}'' e.g. loan-APEX-COMMERCIAL-001
-      or agent-{id}. NOT a UUID — stream-scoped identifier.'
+      or agent-{id}. NOT a UUID â€” stream-scoped identifier.'
     format: uuid
   aggregate_type:
     type: string
@@ -55,15 +55,9 @@ schema:
   sequence_number:
     type: integer
     required: true
-    description: Sequential order number indicating the position or sequence of an
-      event within a series, starting from 1 and incrementing by 1 for each subsequent
-      event
+    description: Monotonically increasing per aggregate_id. No gaps, no duplicates.
     minimum: 1
     maximum: 9.0
-    x_business_rule: value >= 1 AND value is integer AND value is unique within partition
-    x_cross_column_relationship: Orders events chronologically within the same aggregate_id;
-      should be monotonically increasing per aggregate_id; typically used with event_id
-      to maintain event ordering
   schema_version:
     type: string
     required: true
@@ -81,7 +75,7 @@ schema:
   payload.application_id:
     type: string
     required: true
-    description: 'Column payload.application_id — null fraction: 0.0%'
+    description: 'Column payload.application_id â€” null fraction: 0.0%'
     format: uuid
   payload.confidence_score:
     type: number
@@ -93,7 +87,7 @@ schema:
   metadata.causation_id:
     type: string
     required: false
-    description: Causation ID. Nullable — null for root events.
+    description: Causation ID. Nullable â€” null for root events.
     format: uuid
   metadata.correlation_id:
     type: string
@@ -134,12 +128,3 @@ lineage:
     - event_type
     - payload
     - sequence_number
-llm_annotations:
-  sequence_number:
-    description: Sequential order number indicating the position or sequence of an
-      event within a series, starting from 1 and incrementing by 1 for each subsequent
-      event
-    business_rule: value >= 1 AND value is integer AND value is unique within partition
-    cross_column_relationship: Orders events chronologically within the same aggregate_id;
-      should be monotonically increasing per aggregate_id; typically used with event_id
-      to maintain event ordering

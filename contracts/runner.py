@@ -32,6 +32,7 @@ from pathlib import Path
 
 import pandas as pd
 import yaml
+from attributor import attribute_report
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -297,6 +298,84 @@ def check_row_count(df, minimum, contract_id) -> dict:
                            "HIGH", message=f"Dataset has {actual} rows, expected >= {minimum}.")
     return make_result(check_id, "table", "row_count", "PASS",
                        f"row_count={actual}", f">={minimum}", "LOW")
+
+
+def check_nested_array_confidence(records: list, contract_id: str) -> dict:
+    """
+    Validate extracted_facts[*].confidence values are in [0.0, 1.0].
+    Expects raw JSONL records (dict objects), not a DataFrame.
+    """
+    check_id = f"{contract_id}.extracted_facts[*].confidence.range"
+    column_name = "extracted_facts[*].confidence"
+
+    values = []
+    failing_values = []
+
+    for record in records:
+        if not isinstance(record, dict):
+            continue
+        facts = record.get("extracted_facts", [])
+        if not isinstance(facts, list):
+            continue
+        for fact in facts:
+            if not isinstance(fact, dict):
+                continue
+            conf = fact.get("confidence")
+            if conf is None:
+                continue
+            try:
+                val = float(conf)
+            except (TypeError, ValueError):
+                continue
+            values.append(val)
+            if val < 0.0 or val > 1.0:
+                failing_values.append(val)
+
+    if not values:
+        return make_result(
+            check_id=check_id,
+            column_name=column_name,
+            check_type="range",
+            status="ERROR",
+            actual_value="no confidence values found",
+            expected="min>=0.0, max<=1.0",
+            severity="CRITICAL",
+            records_failing=0,
+            sample_failing=[],
+            message="No extracted_facts confidence values found."
+        )
+
+    min_val = min(values)
+    max_val = max(values)
+    mean_val = sum(values) / len(values)
+    fail_count = len(failing_values)
+
+    if fail_count > 0:
+        return make_result(
+            check_id=check_id,
+            column_name=column_name,
+            check_type="range",
+            status="FAIL",
+            actual_value=f"min={min_val:.4f}, max={max_val:.4f}, mean={mean_val:.4f}",
+            expected="min>=0.0, max<=1.0",
+            severity="CRITICAL",
+            records_failing=fail_count,
+            sample_failing=[str(v) for v in failing_values[:3]],
+            message="confidence is in 0-100 range, not 0.0-1.0. Breaking change detected."
+        )
+
+    return make_result(
+        check_id=check_id,
+        column_name=column_name,
+        check_type="range",
+        status="PASS",
+        actual_value=f"min={min_val:.4f}, max={max_val:.4f}, mean={mean_val:.4f}",
+        expected="min>=0.0, max<=1.0",
+        severity="CRITICAL",
+        records_failing=0,
+        sample_failing=[],
+        message="All extracted_facts confidence values within [0.0, 1.0]."
+    )
 
 
 def check_statistical_drift(df, col, baseline: dict, contract_id) -> list:
@@ -610,6 +689,7 @@ def run_validation(contract_path: str, data_path: str,
 
     # Load inputs
     contract = load_contract(contract_path)
+    raw_records = load_jsonl(data_path)
     df = load_jsonl_flat(data_path)
     snapshot_id = sha256_file(data_path)
     contract_id = contract.get("id", "unknown")
@@ -631,8 +711,9 @@ def run_validation(contract_path: str, data_path: str,
 
     # Run all checks — never crash, always produce complete report
     results = []
+    results.append(check_nested_array_confidence(raw_records, contract_id))
     try:
-        results = checks_for_week(week_key, df, schema, contract_id, baseline)
+        results.extend(checks_for_week(week_key, df, schema, contract_id, baseline))
     except Exception as e:
         results.append(make_result(
             f"{contract_id}.runner_error", "unknown", "runner",
@@ -659,6 +740,20 @@ def run_validation(contract_path: str, data_path: str,
     ensure_dir(os.path.dirname(output_path))
     with open(output_path, "w") as f:
         json.dump(report, f, indent=2)
+
+    # Hard requirement: every FAIL must be attributed and persisted to the
+    # immutable ledger via the attributor pipeline.
+    fail_results = [r for r in results if r["status"] == "FAIL"]
+    if fail_results:
+        print("\n  invoking ViolationAttributor for immutable persistence...")
+        violations = attribute_report(output_path)
+        if len(violations) != len(fail_results):
+            raise RuntimeError(
+                "Hard fail: immutable persistence incomplete. "
+                f"expected {len(fail_results)} attributed violations, "
+                f"got {len(violations)}."
+            )
+        print(f"  ✓ immutable persistence complete: {len(violations)} violations appended")
 
     # Print summary
     print(f"\n  ── Validation Summary ──")

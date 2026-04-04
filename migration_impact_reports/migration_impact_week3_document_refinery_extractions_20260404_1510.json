@@ -1,0 +1,152 @@
+{
+  "report_id": "b19af99e-ea25-4831-8684-d6d73e52ffe3",
+  "report_type": "migration_impact",
+  "contract_id": "week3-document-refinery-extractions",
+  "generated_at": "2026-04-04T15:10:39.234173Z",
+  "snapshot_a": "schema_snapshots\\week3-document-refinery-extractions\\20260404_150758.yaml",
+  "snapshot_b": "schema_snapshots/week3-document-refinery-extractions/20260404_151039_injected.yaml",
+  "total_changes": 3,
+  "breaking_changes": 2,
+  "compatible_changes": 1,
+  "compatibility_verdict": "BREAKING",
+  "human_readable_diff": "[\u2717 BREAKING] REMOVE_FIELD \u2014 field: source_hash.existence\n  action: Two-sprint deprecation minimum. Each registry subscriber must acknowledge removal. No silent drops.\n\n[\u2717 BREAKING] NARROW_TYPE \u2014 field: extracted_facts_confidence.type\n  before: number\n  after:  integer\n  action: CRITICAL. Requires migration plan with rollback. Registry blast radius report mandatory. Statistical baseline must be re-established after migration. Example: float 0.0-1.0 -> int 0-100 is a CRITICAL narrowing change.\n\n[\u2713 COMPATIBLE] CHANGE_RANGE_WIDENING \u2014 field: extracted_facts_confidence.range\n  before: [0.0, 1.0]\n  after:  [0, 100]\n  action: Re-run statistical checks. Consumers accepting wider range are unaffected.\n",
+  "changes": [
+    {
+      "change_type": "REMOVE_FIELD",
+      "field": "source_hash",
+      "property": "existence",
+      "old_value": {
+        "type": "string",
+        "required": true,
+        "description": "SHA-256 of the source file. Changes iff source content changes.",
+        "pattern": "^[a-f0-9]{64}$"
+      },
+      "new_value": null
+    },
+    {
+      "change_type": "NARROW_TYPE",
+      "field": "extracted_facts_confidence",
+      "property": "type",
+      "old_value": "number",
+      "new_value": "integer"
+    },
+    {
+      "change_type": "CHANGE_RANGE_WIDENING",
+      "field": "extracted_facts_confidence",
+      "property": "range",
+      "old_value": "[0.0, 1.0]",
+      "new_value": "[0, 100]"
+    }
+  ],
+  "lineage_blast_radius": {
+    "lineage_available": true,
+    "start_nodes": [],
+    "downstream_nodes": [],
+    "upstream_nodes": [],
+    "summary": {
+      "start_node_count": 0,
+      "downstream_node_count": 0,
+      "upstream_node_count": 0,
+      "max_downstream_depth": 0,
+      "max_upstream_depth": 0
+    }
+  },
+  "consumer_impact": [
+    {
+      "subscriber_id": "week4-cartographer",
+      "subscriber_team": "week4",
+      "validation_mode": "ENFORCE",
+      "contact": "week4-team@org.com",
+      "fields_consumed": [
+        "doc_id",
+        "extracted_facts",
+        "extraction_model",
+        "entities"
+      ],
+      "affected_fields": [],
+      "failure_mode": "Unaffected",
+      "impact_severity": "LOW",
+      "impact_reasons": []
+    },
+    {
+      "subscriber_id": "week7-ai-contract-extensions",
+      "subscriber_team": "week7",
+      "validation_mode": "AUDIT",
+      "contact": "week7-team@org.com",
+      "fields_consumed": [
+        "extracted_facts",
+        "doc_id"
+      ],
+      "affected_fields": [],
+      "failure_mode": "Unaffected",
+      "impact_severity": "LOW",
+      "impact_reasons": []
+    }
+  ],
+  "migration_checklist": [
+    {
+      "step": 1,
+      "action": "CRITICAL. Requires migration plan with rollback. Registry blast radius report mandatory. Statistical baseline must be re-established after migration. Example: float 0.0-1.0 -> int 0-100 is a CRITICAL narrowing change.",
+      "field": "extracted_facts_confidence",
+      "change_type": "NARROW_TYPE",
+      "responsible": "producer-team"
+    },
+    {
+      "step": 2,
+      "action": "Two-sprint deprecation minimum. Each registry subscriber must acknowledge removal. No silent drops.",
+      "field": "source_hash",
+      "change_type": "REMOVE_FIELD",
+      "responsible": "producer-team"
+    },
+    {
+      "step": 3,
+      "action": "Notify week4-cartographer (week4-team@org.com) of breaking changes. Confirm fields_consumed: ['doc_id', 'extracted_facts', 'extraction_model', 'entities'].",
+      "field": "all",
+      "change_type": "NOTIFICATION",
+      "responsible": "week4"
+    },
+    {
+      "step": 4,
+      "action": "Notify week7-ai-contract-extensions (week7-team@org.com) of breaking changes. Confirm fields_consumed: ['extracted_facts', 'doc_id'].",
+      "field": "all",
+      "change_type": "NOTIFICATION",
+      "responsible": "week7"
+    },
+    {
+      "step": 5,
+      "action": "Re-run ContractGenerator to update schema snapshots after migration.",
+      "field": "all",
+      "change_type": "VALIDATION",
+      "responsible": "week7-team"
+    },
+    {
+      "step": 6,
+      "action": "Re-run ValidationRunner on all affected contracts to confirm 0 FAIL results.",
+      "field": "all",
+      "change_type": "VALIDATION",
+      "responsible": "week7-team"
+    }
+  ],
+  "rollback_plan": {
+    "rollback_to_snapshot": "schema_snapshots\\week3-document-refinery-extractions\\20260404_150758.yaml",
+    "steps": [
+      {
+        "step": 1,
+        "action": "Revert producer code changes that caused: ['source_hash', 'extracted_facts_confidence']"
+      },
+      {
+        "step": 2,
+        "action": "Re-deploy producer from last known good commit. Reference snapshot: schema_snapshots\\week3-document-refinery-extractions\\20260404_150758.yaml"
+      },
+      {
+        "step": 3,
+        "action": "Re-run ValidationRunner to confirm all checks PASS."
+      },
+      {
+        "step": 4,
+        "action": "Re-establish statistical baselines in schema_snapshots/baselines.json if the rollback changes numeric distributions."
+      }
+    ],
+    "estimated_recovery_time": "1-2 hours for code rollback + 30 min validation"
+  }
+}

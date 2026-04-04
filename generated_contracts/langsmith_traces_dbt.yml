@@ -9,9 +9,7 @@ models:
     - not_null
     - unique
   - name: name
-    description: The name or identifier of the execution trace, representing a specific
-      chain or process being tracked. Examples include document extraction and judicial
-      verdict processing chains.
+    description: "Column name \u2014 null fraction: 0.0%"
     tests:
     - not_null
     - accepted_values:
@@ -27,8 +25,7 @@ models:
         - chain
         - llm
   - name: error
-    description: Stores error information or exception details that occurred during
-      the execution of a trace, typically null when the trace completed successfully
+    description: "Column error \u2014 null fraction: 100.0%"
   - name: start_time
     description: "Column start_time \u2014 null fraction: 0.0% [format: date-time]"
     tests:
@@ -50,8 +47,7 @@ models:
     tests:
     - not_null
   - name: total_cost
-    description: The total monetary cost associated with executing a trace, measured
-      in dollars with precision to six decimal places
+    description: Cost in USD. Must be >= 0.
     tests:
     - not_null
   - name: tags

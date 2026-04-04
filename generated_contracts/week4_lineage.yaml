@@ -2,10 +2,10 @@ kind: DataContract
 apiVersion: v3.0.0
 id: week4-lineage-snapshots
 info:
-  title: Week 4 Brownfield Cartographer — Lineage Snapshots
+  title: Week 4 Brownfield Cartographer â€” Lineage Snapshots
   version: 1.0.0
   owner: week4-team
-  description: Auto-generated contract for week4 outputs. Generated at 2026-04-03T16:31:07.934705Z
+  description: Auto-generated contract for week4 outputs. Generated at 2026-04-04T20:45:26.060587Z
     from 1 records.
 servers:
   local:
@@ -20,52 +20,30 @@ schema:
   snapshot_id:
     type: string
     required: true
-    description: 'Column snapshot_id — null fraction: 0.0%'
+    description: 'Column snapshot_id â€” null fraction: 0.0%'
     format: uuid
     unique: true
   codebase_root:
     type: string
     required: true
-    description: The root directory path of the codebase on the local file system
-      where the project is located
-    x_business_rule: value is not null and length(value) > 0 and (value like '%:\\%'
-      or value like '/%')
-    x_cross_column_relationship: Represents the source location for the snapshot_id
-      and git_commit data; the nodes and edges are derived from analyzing code at
-      this codebase_root path
+    description: 'Column codebase_root â€” null fraction: 0.0%'
   git_commit:
     type: string
     required: true
-    description: A unique SHA-1 hash identifier representing a specific commit in
-      a Git version control system, used to track the exact version of the codebase
-      at the time of the snapshot
+    description: Exactly 40 hex characters.
     pattern: ^[a-f0-9]{40}$
-    x_business_rule: value matches '^[a-f0-9]{40}$' and value is not null
-    x_cross_column_relationship: Links to the specific version of the codebase identified
-      by codebase_root at the time indicated by captured_at; represents the state
-      of code when nodes and edges were measured in this snapshot_id
   nodes:
     type: string
     required: true
-    description: Array of node objects representing files and components in the codebase,
-      each containing a label, metadata (language, last_modified timestamp, path,
-      purpose), node_id with file path prefix, and type classification (SERVICE, FILE,
-      PIPELINE, MODEL, TABLE)
-    x_business_rule: 'Must be valid JSON array; each node must contain ''label'',
-      ''metadata'', ''node_id'', and ''type'' fields; node_id must follow pattern
-      ''file::{path}''; type must be one of: SERVICE, FILE, PIPELINE, MODEL, TABLE'
-    x_cross_column_relationship: Nodes are connected via 'edges' column which defines
-      relationships between node_ids; nodes represent the codebase structure rooted
-      at 'codebase_root' path; snapshot is versioned by 'git_commit' and timestamped
-      at 'captured_at'
+    description: 'Column nodes â€” null fraction: 0.0%'
   edges:
     type: string
     required: true
-    description: 'Column edges — null fraction: 0.0%'
+    description: 'Column edges â€” null fraction: 0.0%'
   captured_at:
     type: string
     required: true
-    description: 'Column captured_at — null fraction: 0.0%'
+    description: 'Column captured_at â€” null fraction: 0.0%'
     format: date-time
 quality:
   type: SodaChecks
@@ -87,32 +65,3 @@ lineage:
     - edges.source
     - edges.target
     - nodes.node_id
-llm_annotations:
-  codebase_root:
-    description: The root directory path of the codebase on the local file system
-      where the project is located
-    business_rule: value is not null and length(value) > 0 and (value like '%:\\%'
-      or value like '/%')
-    cross_column_relationship: Represents the source location for the snapshot_id
-      and git_commit data; the nodes and edges are derived from analyzing code at
-      this codebase_root path
-  git_commit:
-    description: A unique SHA-1 hash identifier representing a specific commit in
-      a Git version control system, used to track the exact version of the codebase
-      at the time of the snapshot
-    business_rule: value matches '^[a-f0-9]{40}$' and value is not null
-    cross_column_relationship: Links to the specific version of the codebase identified
-      by codebase_root at the time indicated by captured_at; represents the state
-      of code when nodes and edges were measured in this snapshot_id
-  nodes:
-    description: Array of node objects representing files and components in the codebase,
-      each containing a label, metadata (language, last_modified timestamp, path,
-      purpose), node_id with file path prefix, and type classification (SERVICE, FILE,
-      PIPELINE, MODEL, TABLE)
-    business_rule: 'Must be valid JSON array; each node must contain ''label'', ''metadata'',
-      ''node_id'', and ''type'' fields; node_id must follow pattern ''file::{path}'';
-      type must be one of: SERVICE, FILE, PIPELINE, MODEL, TABLE'
-    cross_column_relationship: Nodes are connected via 'edges' column which defines
-      relationships between node_ids; nodes represent the codebase structure rooted
-      at 'codebase_root' path; snapshot is versioned by 'git_commit' and timestamped
-      at 'captured_at'

@@ -9,21 +9,15 @@ models:
     - not_null
     - unique
   - name: codebase_root
-    description: The root directory path of the codebase on the local file system
-      where the project is located
+    description: "Column codebase_root \u2014 null fraction: 0.0%"
     tests:
     - not_null
   - name: git_commit
-    description: A unique SHA-1 hash identifier representing a specific commit in
-      a Git version control system, used to track the exact version of the codebase
-      at the time of the snapshot
+    description: Exactly 40 hex characters.
     tests:
     - not_null
   - name: nodes
-    description: Array of node objects representing files and components in the codebase,
-      each containing a label, metadata (language, last_modified timestamp, path,
-      purpose), node_id with file path prefix, and type classification (SERVICE, FILE,
-      PIPELINE, MODEL, TABLE)
+    description: "Column nodes \u2014 null fraction: 0.0%"
     tests:
     - not_null
   - name: edges
